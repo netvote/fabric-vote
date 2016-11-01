@@ -6,13 +6,20 @@ The project consists of three components:
 
 ### chaincode (golang):  
 
-This contains blockchian transactions for creating decisions, voters, and casting votes.
+This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
+#### Invoke Functions
+- add_decision: (admin) create a decision configuration
+- add_voter: (admin) creates a voter on blockchain and allocates votes
+- cast_votes: (voter) spends votes on decisions, updates results, removes voter
+
+#### Query Functions
+- get_results: (admin) retrieves current results of a given decision
+- get_ballot: (voter) retrieves ballot and vote units for a user (using voter_id certificate attribute)
 
 ### membersrvc
 
-For now, this is a hardcoded yaml with the initial admin.  All users are created at run-time via the node apps.
-
+For now, this is a hardcoded yaml with the initial admin.  All users are created at runtime via the node apps.  
 
 ### node clients
 
