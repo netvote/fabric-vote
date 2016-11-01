@@ -8,12 +8,12 @@ The project consists of three components:
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
-#### Invoke Functions
+#### Invoke Transactions
 - add_decision: (admin) create a decision configuration
 - add_voter: (admin) creates a voter on blockchain and allocates votes
 - cast_votes: (voter) spends votes on decisions, updates results, removes voter
 
-#### Query Functions
+#### Query Transactions
 - get_results: (admin) retrieves current results of a given decision
 - get_ballot: (voter) retrieves ballot and vote units for a user (using voter_id certificate attribute)
 
@@ -25,4 +25,4 @@ For now, this is a hardcoded yaml with the initial admin.  All users are created
 
 These are basic clients that interact with a docker peer and can `Invoke` or `Query` chaincode transactions.
  
-The Hyperledger rest API is available on port 7050 on the peer node.
+The Hyperledger rest API is available on port `7050` on the peer node.
