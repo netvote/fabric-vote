@@ -34,7 +34,7 @@ chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
         enrollmentID: userName,
         affiliation: "company_a",
         attributes: [
-            { name: "group", value: "sales" }
+            { name: "role", value: "voter" }
         ]
     };
 
@@ -42,7 +42,9 @@ chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
         if (error) throw Error(" Failed to register and enroll " + userName + ": " + error);
         console.log("Registered %s successfully\n", userName);
         console.log(user.toString()+"\n");
-        // email thing to user
+
+        //TODO: somehow this code needs to get to the user
+
     });
 
 });

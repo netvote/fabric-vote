@@ -1,3 +1,8 @@
+/**
+ * This code is all over the place - and is mostly a scratch spce to get things working
+ */
+
+
 // TEST DATA
 var DECISION = {
     Id: "us-president-2016",
@@ -122,11 +127,11 @@ function toString(obj){
 
 function doVote(user){
     createDecision(user, DECISION, function(r){
-        //createVoter(user, VOTER, function(r){
-            //castVote(user, VOTE, function(r){
-                //getResults(user, DECISION);
-            //});
-        //});
+        createVoter(user, VOTER, function(r){
+            castVote(user, VOTE, function(r){
+                getResults(user, DECISION);
+            });
+        });
     });
 }
 
@@ -187,7 +192,7 @@ function invoke_chaincode(user, func, args, callback) {
         chaincodeID: chaincodeID,
         fcn: func,
         args: args,
-        attrs: ["group"]
+        attrs: ["role"]
     };
     // Issue the invoke request and listen for events
     var tx = user.invoke(invokeRequest);
