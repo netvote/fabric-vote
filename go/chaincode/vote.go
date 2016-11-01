@@ -257,6 +257,7 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 	} else if function == QUERY_GET_BALLOT {
 		//TODO: validate valid voter_id
 		//TODO: only allow for non-voted entries
+		//TODO: also return number of vote units for this voter (in map)
 		voter_id_bytes, err := stub.ReadCertAttribute("voter_id")
 		if(nil != err){
 			return nil, err
