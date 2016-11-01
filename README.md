@@ -9,13 +9,13 @@ The project consists of three components:
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
 #### Invoke Transactions
-- add_decision: (admin) create a decision configuration
-- add_voter: (admin) creates a voter on blockchain and allocates votes
-- cast_votes: (voter) spends votes on decisions, updates results, removes voter
+- `add_decision`: (admin) create a decision configuration
+- `add_voter`: (admin) creates a voter on blockchain and allocates votes
+- `cast_votes`: (voter) spends votes on decisions, updates results, removes voter
 
 #### Query Transactions
-- get_results: (admin) retrieves current results of a given decision
-- get_ballot: (voter) retrieves ballot and vote units for a user (using voter_id certificate attribute)
+- `get_results`: (admin) retrieves current results of a given decision
+- `get_ballot`: (voter) retrieves ballot and vote units for the current user (using certificate attribute)
 
 ### membersrvc
 
