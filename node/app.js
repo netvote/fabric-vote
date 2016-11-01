@@ -150,8 +150,8 @@ function createDecision(user, decision, callback){
 }
 
 function getResults(user, decision){
-    console.log("getting results: "+decision.Id);
-    query_chaincode(user, "get_decision", [toString(decision)])
+    console.log("getting results: "+toString({ DecisionId: decision.Id }));
+    query_chaincode(user, "get_results", [toString({ DecisionId: decision.Id })])
 }
 
 // Query chaincode
