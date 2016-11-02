@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
+	"os"
 )
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
+//TODO: need to think about IDs and how to avoid collisions (probably should generate...right now not doing so)
 
 //object prefixes
 const VOTER_PREFIX = "VOTER_"
 const DECISION_PREFIX = "DECISION_"
 const RESULTS_PREFIX = "RESULTS_"
+const BALLOT_PREFIX = "BALLOT_"
 
 // voter partition (defaults)
 const PARTITION_ALL = "ALL"
@@ -20,15 +23,24 @@ const PARTITION_ALL = "ALL"
 // function names
 const FUNC_ADD_DECISION = "add_decision"
 const FUNC_ADD_VOTER = "add_voter"
+const FUNC_ADD_BALLOT = "add_ballot"
 const FUNC_CAST_VOTES = "cast_votes"
+const FUNC_ALLOCATE_BALLOT_VOTES = "allocate_ballot_votes"
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT = "get_ballot"
 
 type Decision struct {
 	Id      string
 	Name    string
+	BallotId string
 	Options []string
 	ResponsesRequired int
+}
+
+type Ballot struct{
+	Id string
+	Name string
+	Decisions []string
 }
 
 type DecisionResults struct{
@@ -142,6 +154,55 @@ func saveDecision(stub shim.ChaincodeStubInterface, decision Decision) (error){
 	return nil
 }
 
+func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) {
+	voter := getVoter(stub, voterId)
+	if(voter.Id == ""){
+		voter.Id = voterId
+		AddVoter(stub, voter)
+		voter = getVoter(stub, voterId)
+	}
+	ballot := getBallot(stub, ballotId)
+
+	for _, decisionId := range ballot.Decisions {
+		decision := getDecision(stub, decisionId)
+
+		if _, exists := voter.DecisionIdToVoteCount[decisionId]; exists {
+			//already allocated for this, skip
+		}else{
+			voter.DecisionIdToVoteCount[decisionId] = decision.ResponsesRequired
+		}
+	}
+	saveVoter(stub, voter)
+}
+
+func saveBallot(stub shim.ChaincodeStubInterface, ballot Ballot) (error){
+	var ballot_json, err = json.Marshal(ballot)
+	if err != nil {
+		return errors.New("Invalid JSON!")
+	}
+	stub.PutState(BALLOT_PREFIX+ballot.Id, ballot_json)
+	return nil
+}
+
+func getBallot(stub shim.ChaincodeStubInterface, ballotId string)(Ballot){
+	var b Ballot
+	var config([]byte)
+	config, _ = stub.GetState(BALLOT_PREFIX+ballotId)
+	if(config == nil){
+		return b
+	}
+	json.Unmarshal(config, &b)
+	return b
+}
+
+func addDecisionToBallot(stub shim.ChaincodeStubInterface, ballotId string, decisionId string){
+	ballot := getBallot(stub, ballotId)
+	if(ballot.Id == ""){
+		ballot = Ballot{Id: ballotId, Decisions: []string{decisionId}}
+		saveBallot(stub, ballot)
+	}
+}
+
 func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
@@ -190,10 +251,19 @@ func AddDecision(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, e
 	results := DecisionResults { DecisionId: decision.Id, Results: make(map[string]map[string]int)}
 	saveDecision(stub, decision)
 	saveDecisionResults(stub, results)
+	if(decision.BallotId != ""){
+		addDecisionToBallot(stub, decision.BallotId, decision.Id)
+	}
 	return nil, nil
 }
 
 func AddVoter(stub shim.ChaincodeStubInterface, voter Voter) ([]byte, error){
+	if(voter.DecisionIdToVoteCount == nil){
+		voter.DecisionIdToVoteCount = make(map[string]int)
+	}
+	if(voter.Partitions == nil){
+		voter.Partitions = []string{}
+	}
 	var voter_json, err = json.Marshal(voter)
 	if err != nil {
 		return nil, err
@@ -211,7 +281,7 @@ type VoteChaincode struct {
 
 func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	if function == FUNC_ADD_DECISION {
-		//TODO: authorize
+		//TODO: authorize admin
 		var decision Decision
 		var decision_bytes = []byte(args[0])
 		if err := json.Unmarshal(decision_bytes, &decision); err != nil {
@@ -219,14 +289,34 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 		}
 		return AddDecision(stub, decision)
 
-	} else if function == FUNC_ADD_VOTER {
-		//TODO: authorize
+	} else if function == FUNC_ADD_BALLOT {  //TODO:  may not need if ballot is derived from decisions sharing ballot-id
+		//TODO: authorize admin
+		var ballot Ballot
+		var ballot_bytes = []byte(args[0])
+		if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
+			return nil, err
+		}
+		saveBallot(stub, ballot)
+	}else if function == FUNC_ADD_VOTER { //TODO: may not need if voter creates himself
+		//TODO: authorize admin
 		var voter Voter
 		var voter_bytes = []byte(args[0])
 		if err := json.Unmarshal(voter_bytes, &voter); err != nil {
 			return nil, err
 		}
 		return AddVoter(stub, voter)
+	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
+		//TODO: authorize voter
+		voter_id, err := getVoterId(stub)
+		if(nil != err){
+			return nil, err
+		}
+		var ballot Ballot
+		var ballot_bytes = []byte(args[0])
+		if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
+			return nil, err
+		}
+		allocateVotes(stub, voter_id, ballot.Id)
 
 	} else if function == FUNC_CAST_VOTES {
 		//TODO: authorize voter
@@ -241,6 +331,19 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 	}
 
 	return nil, nil
+}
+
+func getVoterId(stub shim.ChaincodeStubInterface) (string, error){
+	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
+	if(os.Getenv("TEST_ENV") != ""){
+		return "slanders", nil
+	}
+
+	voter_id_bytes, err := stub.ReadCertAttribute("voter_id")
+	if(nil != err){
+		return "", err
+	}
+	return string(voter_id_bytes), nil
 }
 
 // Init chain code
@@ -263,11 +366,11 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 		//TODO: validate valid voter_id
 		//TODO: only allow for non-voted entries
 		//TODO: also return number of vote units for this voter (in map)
-		voter_id_bytes, err := stub.ReadCertAttribute("voter_id")
+		voter_id, err := getVoterId(stub)
 		if(nil != err){
 			return nil, err
 		}
-		voter := getVoter(stub, string(voter_id_bytes))
+		voter := getVoter(stub, voter_id)
 		ballot := make([]Decision, 0)
 		for k, _ := range voter.DecisionIdToVoteCount {
 			ballot = append(ballot, getDecision(stub, k))

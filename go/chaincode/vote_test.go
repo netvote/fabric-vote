@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"testing"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"os"
 )
 
-
+func mockCert(){
+	//makes certificate voter_id return slanders
+	os.Setenv("TEST_ENV","1")
+}
 
 
 func checkInit(t *testing.T, stub *shim.MockStub, args []string) {
@@ -83,7 +87,46 @@ func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
 
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`})
 
-	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}`)
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"","Options":["a","b"],"ResponsesRequired":1}`)
+}
+
+func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
+	mockCert()
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-decision")
+
+	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"]}`})
+
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1}`)
+	checkState(t, stub, "BALLOT_123-213412-34123-41234", `{"Id":"123-213412-34123-41234","Name":"","Decisions":["test-id"]}`)
+
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+
+	checkState(t, stub, "VOTER_slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1}}`)
+}
+
+func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
+	mockCert()
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+	stub.MockTransactionStart("test-invoke-add-decision")
+
+	//setup
+	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"]}`})
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+	checkState(t, stub, "VOTER_slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1}}`)
+
+	//cast votes
+	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
+	checkState(t, stub, "VOTER_slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0}}`)
+
+	//try to re-allocate votes, votes should remain at 0 for this decision
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+	checkState(t, stub, "VOTER_slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0}}`)
 }
 
 func TestVoteChaincode_Invoke_AddVoter(t *testing.T) {
@@ -124,8 +167,8 @@ func TestVoteChaincode_Invoke_CastVote(t *testing.T) {
 	checkState(t, stub, "VOTER_jsmith", 	`{"Id":"jsmith","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":1,"1912-us-president":1}}`)
 	checkState(t, stub, "VOTER_acooper", 	`{"Id":"acooper","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":1,"1912-us-president":1}}`)
 
-	checkState(t, stub, "DECISION_1912-us-president", `{"Id":"1912-us-president","Name":"president","Options":["Taft","Bryan"],"ResponsesRequired":1}`)
-	checkState(t, stub, "DECISION_1912-ga-governor", `{"Id":"1912-ga-governor","Name":"governor","Options":["Mark","Sarah"],"ResponsesRequired":1}`)
+	checkState(t, stub, "DECISION_1912-us-president", `{"Id":"1912-us-president","Name":"president","BallotId":"","Options":["Taft","Bryan"],"ResponsesRequired":1}`)
+	checkState(t, stub, "DECISION_1912-ga-governor", `{"Id":"1912-ga-governor","Name":"governor","BallotId":"","Options":["Mark","Sarah"],"ResponsesRequired":1}`)
 
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "Decisions":[{"DecisionId":"1912-us-president", "Selections": {"Taft":1}}, {"DecisionId":"1912-ga-governor", "Selections": {"Sarah":1}}]}`})
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"jsmith", "Decisions":[{"DecisionId":"1912-us-president", "Selections": {"Bryan":1}}, {"DecisionId":"1912-ga-governor", "Selections": {"Mark":1}}]}`})
