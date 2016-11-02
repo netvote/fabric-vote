@@ -10,7 +10,9 @@ This contains blockchian transactions for creating decisions, voters, and castin
 
 #### Invoke Transactions
 - `add_decision`: (admin) create a decision configuration
+- `add_ballot`: (admin) creates a ballot with list of decision ids
 - `add_voter`: (admin) creates a voter on blockchain and allocates votes
+- `allocate_ballot_votes`: (voter) creates a voter and allocates votes for given ballot ID 
 - `cast_votes`: (voter) spends votes on decisions, updates results, removes voter
 
 #### Query Transactions
