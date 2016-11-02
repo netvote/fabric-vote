@@ -110,8 +110,16 @@ func saveDecisionResults(stub shim.ChaincodeStubInterface, decision DecisionResu
 	if err != nil {
 		return errors.New("Invalid JSON!")
 	}
-	log("saving results..."+decision.DecisionId)
 	stub.PutState(RESULTS_PREFIX+decision.DecisionId, decision_json)
+	return nil
+}
+
+func saveVoter(stub shim.ChaincodeStubInterface, v Voter) (error){
+	var voter_json, err = json.Marshal(v)
+	if err != nil {
+		return errors.New("Invalid JSON!")
+	}
+	stub.PutState(VOTER_PREFIX+v.Id, voter_json)
 	return nil
 }
 
@@ -124,10 +132,6 @@ func getVoter(stub shim.ChaincodeStubInterface, voterId string) (Voter) {
 	return v
 }
 
-func clearVoter(stub shim.ChaincodeStubInterface, voter Voter) (error){
-	stub.DelState(VOTER_PREFIX+voter.Id)
-	return nil
-}
 
 func saveDecision(stub shim.ChaincodeStubInterface, decision Decision) (error){
 	var decision_json, err = json.Marshal(decision)
@@ -169,11 +173,12 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 			}
 		}
 		results_array = append(results_array, decisionResults)
+		voter.DecisionIdToVoteCount[voter_decision.DecisionId] = 0
 	}
 	for _, d := range results_array {
 		saveDecisionResults(stub, d)
 	}
-	clearVoter(stub, voter)
+	saveVoter(stub, voter)
 
 	return nil, nil
 }

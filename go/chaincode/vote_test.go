@@ -132,9 +132,9 @@ func TestVoteChaincode_Invoke_CastVote(t *testing.T) {
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"acooper", "Decisions":[{"DecisionId":"1912-us-president", "Selections": {"Taft":1}}, {"DecisionId":"1912-ga-governor", "Selections": {"Mark":1}}]}`})
 
 	//VERIFY SIDE EFFECTS
-	checkGone(t, stub, "VOTER_slanders")
-	checkGone(t, stub, "VOTER_jsmith")
-	checkGone(t, stub, "VOTER_acooper")
+	checkState(t, stub, "VOTER_slanders", `{"Id":"slanders","Partitions":["us","ga","district-123"],"DecisionIdToVoteCount":{"1912-ga-governor":0,"1912-us-president":0}}`)
+	checkState(t, stub, "VOTER_jsmith", `{"Id":"jsmith","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":0,"1912-us-president":0}}`)
+	checkState(t, stub, "VOTER_acooper", `{"Id":"acooper","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":0,"1912-us-president":0}}`)
 
 	checkState(t, stub, "RESULTS_1912-us-president", `{"DecisionId":"1912-us-president","Results":{"ALL":{"Bryan":1,"Taft":2},"district-123":{"Taft":1},"district-124":{"Bryan":1,"Taft":1},"ga":{"Bryan":1,"Taft":2},"us":{"Bryan":1,"Taft":2}}}`)
 	checkState(t, stub, "RESULTS_1912-ga-governor", `{"DecisionId":"1912-ga-governor","Results":{"ALL":{"Mark":2,"Sarah":1},"district-123":{"Sarah":1},"district-124":{"Mark":2},"ga":{"Mark":2,"Sarah":1},"us":{"Mark":2,"Sarah":1}}}`)
