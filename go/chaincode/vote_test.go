@@ -21,6 +21,23 @@ func checkInit(t *testing.T, stub *shim.MockStub, args []string) {
 	}
 }
 
+func checkInvokeWithResponse(t *testing.T, stub *shim.MockStub, function string, txId string, args []string, value string) {
+	bytes, err := stub.MockInvoke(txId, function, args)
+	if err != nil {
+		fmt.Println("Invoke", args, "failed", err)
+		t.FailNow()
+	}
+	if bytes == nil {
+		fmt.Println("Response is nil")
+		t.FailNow()
+	}
+	if string(bytes) != value {
+		fmt.Println(string(bytes))
+		fmt.Println("State value", string(bytes), "was not", value, "as expected")
+		t.FailNow()
+	}
+}
+
 func checkInvoke(t *testing.T, stub *shim.MockStub, function string, args []string) {
 	_, err := stub.MockInvoke("1", function, args)
 	if err != nil {
@@ -88,6 +105,22 @@ func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`})
 
 	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"","Options":["a","b"],"ResponsesRequired":1}`)
+}
+
+func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-ballot")
+
+	checkInvokeWithResponse(t, stub, "add_ballot", "transaction-id",
+		[]string{`{"Name":"Nov 8, 2016","Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}]}`},
+		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"]}`)
+
+	checkState(t, stub, "BALLOT_transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"]}`)
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":["a","b"],"ResponsesRequired":1}`)
+
 }
 
 func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {

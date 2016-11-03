@@ -43,6 +43,11 @@ type Ballot struct{
 	Decisions []string
 }
 
+type BallotDecisions struct{
+	Name string
+	Decisions []Decision
+}
+
 type DecisionResults struct{
 	DecisionId string
 	Results map[string]map[string]int
@@ -175,7 +180,21 @@ func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 	saveVoter(stub, voter)
 }
 
-func saveBallot(stub shim.ChaincodeStubInterface, ballot Ballot) (error){
+func saveBallotDecisions(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
+	ballot := Ballot{Id: stub.GetTxID(), Name: ballotDecisions.Name, Decisions: []string{}}
+
+	for _, decision := range ballotDecisions.Decisions {
+		decision.BallotId = ballot.Id
+		addDecisionToChain(stub, decision)
+		ballot.Decisions = append(ballot.Decisions, decision.Id)
+	}
+
+	saveBallot(stub, ballot)
+	return ballot
+}
+
+
+func saveBallot(stub shim.ChaincodeStubInterface, ballot Ballot)(error){
 	var ballot_json, err = json.Marshal(ballot)
 	if err != nil {
 		return errors.New("Invalid JSON!")
@@ -244,13 +263,18 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 	return nil, nil
 }
 
-func AddDecision(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, error){
+func addDecisionToChain(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, error){
 	if(decision.ResponsesRequired == 0) {
 		decision.ResponsesRequired = 1
 	}
 	results := DecisionResults { DecisionId: decision.Id, Results: make(map[string]map[string]int)}
 	saveDecision(stub, decision)
 	saveDecisionResults(stub, results)
+	return nil, nil
+}
+
+func AddDecision(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, error){
+	addDecisionToChain(stub, decision)
 	if(decision.BallotId != ""){
 		addDecisionToBallot(stub, decision.BallotId, decision.Id)
 	}
@@ -289,14 +313,15 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 		}
 		return AddDecision(stub, decision)
 
-	} else if function == FUNC_ADD_BALLOT {  //TODO:  may not need if ballot is derived from decisions sharing ballot-id
+	} else if function == FUNC_ADD_BALLOT {
 		//TODO: authorize admin
-		var ballot Ballot
-		var ballot_bytes = []byte(args[0])
-		if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
+		var ballotDecisions BallotDecisions
+		var decisions_bytes = []byte(args[0])
+		if err := json.Unmarshal(decisions_bytes, &ballotDecisions); err != nil {
 			return nil, err
 		}
-		saveBallot(stub, ballot)
+		ballot := saveBallotDecisions(stub, ballotDecisions)
+		return json.Marshal(ballot)
 	}else if function == FUNC_ADD_VOTER { //TODO: may not need if voter creates himself
 		//TODO: authorize admin
 		var voter Voter
