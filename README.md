@@ -8,19 +8,22 @@ The project consists of three components:
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
-#### Invoke Transactions
-- `add_decision`: (admin) create a decision configuration
-- `add_ballot`: (admin) creates a ballot with list of decision ids
+#### Admin Invoke Transactions
+- `add_decision`: (admin) create a decision configuration 
+- `add_ballot`: (admin) creates a ballot with list of decision objects, returns ballot with ID
 - `add_voter`: (admin) creates a voter on blockchain and allocates votes *may not be needed*
+
+#### Voter Invoke Transactions
 - `allocate_ballot_votes`: (voter) creates a voter and allocates votes for given ballot ID 
-- `cast_votes`: (voter) spends votes on decisions, updates results, removes votes from voter
+- `cast_votes`: (voter) spends votes on decisions, which updates results, removes votes from voter
+
 #### Query Transactions
 - `get_results`: (admin) retrieves current results of a given decision
 - `get_ballot`: (voter) retrieves ballot and vote units for the current user (using certificate attribute)
 
 ### membersrvc
 
-For now, this is a hardcoded yaml with the initial admin.  All users are created at runtime via the node apps.  
+For now, this is a hardcoded yaml with the initial admin.  All users are created at runtime via the node apps.  The steps follow the registration/enrollment process defined here: http://hyperledger-fabric.readthedocs.io/en/latest/protocol-spec/#421-userclient-enrollment-process
 
 ### node clients
 
