@@ -20,6 +20,12 @@ const BALLOT_PREFIX = "BALLOT_"
 // voter partition (defaults)
 const PARTITION_ALL = "ALL"
 
+const ATTRIBUTE_ROLE = "role"
+const ATTRIBUTE_VOTER_ID = "voter_id"
+
+const ROLE_ADMIN = "admin"
+const ROLE_VOTER = "voter"
+
 // function names
 const FUNC_ADD_DECISION = "add_decision"
 const FUNC_ADD_VOTER = "add_voter"
@@ -263,6 +269,27 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 	return nil, nil
 }
 
+func getVoterId(stub shim.ChaincodeStubInterface) (string, error){
+	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
+	if(os.Getenv("TEST_ENV") != ""){
+		return "slanders", nil
+	}
+
+	voter_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_VOTER_ID)
+	if(nil != err){
+		return "", err
+	}
+	return string(voter_id_bytes), nil
+}
+
+func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
+	if(os.Getenv("TEST_ENV") != ""){
+		return true
+	}
+	result, _ := stub.VerifyAttribute(ATTRIBUTE_ROLE, []byte(role))
+	return result
+}
+
 func addDecisionToChain(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, error){
 	if(decision.ResponsesRequired == 0) {
 		decision.ResponsesRequired = 1
@@ -298,6 +325,9 @@ func AddVoter(stub shim.ChaincodeStubInterface, voter Voter) ([]byte, error){
 }
 
 
+
+
+
 // SimpleChaincode example simple Chaincode implementation
 type VoteChaincode struct {
 }
@@ -305,52 +335,57 @@ type VoteChaincode struct {
 
 func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	if function == FUNC_ADD_DECISION {
-		//TODO: authorize admin
-		var decision Decision
-		var decision_bytes = []byte(args[0])
-		if err := json.Unmarshal(decision_bytes, &decision); err != nil {
-			return nil, err
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var decision Decision
+			var decision_bytes = []byte(args[0])
+			if err := json.Unmarshal(decision_bytes, &decision); err != nil {
+				return nil, err
+			}
+			return AddDecision(stub, decision)
 		}
-		return AddDecision(stub, decision)
 
 	} else if function == FUNC_ADD_BALLOT {
-		//TODO: authorize admin
-		var ballotDecisions BallotDecisions
-		var decisions_bytes = []byte(args[0])
-		if err := json.Unmarshal(decisions_bytes, &ballotDecisions); err != nil {
-			return nil, err
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var ballotDecisions BallotDecisions
+			var decisions_bytes = []byte(args[0])
+			if err := json.Unmarshal(decisions_bytes, &ballotDecisions); err != nil {
+				return nil, err
+			}
+			ballot := saveBallotDecisions(stub, ballotDecisions)
+			return json.Marshal(ballot)
 		}
-		ballot := saveBallotDecisions(stub, ballotDecisions)
-		return json.Marshal(ballot)
 	}else if function == FUNC_ADD_VOTER { //TODO: may not need if voter creates himself
-		//TODO: authorize admin
-		var voter Voter
-		var voter_bytes = []byte(args[0])
-		if err := json.Unmarshal(voter_bytes, &voter); err != nil {
-			return nil, err
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var voter Voter
+			var voter_bytes = []byte(args[0])
+			if err := json.Unmarshal(voter_bytes, &voter); err != nil {
+				return nil, err
+			}
+			return AddVoter(stub, voter)
 		}
-		return AddVoter(stub, voter)
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		//TODO: authorize voter
-		voter_id, err := getVoterId(stub)
-		if(nil != err){
-			return nil, err
+		if(hasRole(stub, ROLE_VOTER)) {
+			voter_id, err := getVoterId(stub)
+			if (nil != err) {
+				return nil, err
+			}
+			var ballot Ballot
+			var ballot_bytes = []byte(args[0])
+			if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
+				return nil, err
+			}
+			allocateVotes(stub, voter_id, ballot.Id)
 		}
-		var ballot Ballot
-		var ballot_bytes = []byte(args[0])
-		if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
-			return nil, err
-		}
-		allocateVotes(stub, voter_id, ballot.Id)
-
 	} else if function == FUNC_CAST_VOTES {
-		//TODO: authorize voter
-		var vote Vote
-		var vote_bytes = []byte(args[0])
-		if err := json.Unmarshal(vote_bytes, &vote); err != nil {
-			return nil, err
+		if(hasRole(stub, ROLE_VOTER)) {
+			var vote Vote
+			var vote_bytes = []byte(args[0])
+			if err := json.Unmarshal(vote_bytes, &vote); err != nil {
+				return nil, err
+			}
+			return CastVote(stub, vote)
 		}
-		return CastVote(stub, vote)
 	} else{
 		return nil, errors.New("Invalid Function: "+function)
 	}
@@ -358,18 +393,7 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 	return nil, nil
 }
 
-func getVoterId(stub shim.ChaincodeStubInterface) (string, error){
-	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
-	if(os.Getenv("TEST_ENV") != ""){
-		return "slanders", nil
-	}
 
-	voter_id_bytes, err := stub.ReadCertAttribute("voter_id")
-	if(nil != err){
-		return "", err
-	}
-	return string(voter_id_bytes), nil
-}
 
 // Init chain code
 func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error)  {
@@ -379,30 +403,29 @@ func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, 
 // Query callback representing the query of a chaincode
 func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	if function == QUERY_GET_RESULTS {
-		//TODO: authorize
-		//TODO: validate valid decision Id
-		var decision DecisionResults
-		var decision_bytes = []byte(args[0])
-		if err := json.Unmarshal(decision_bytes, &decision); err != nil {
-			return nil, err
-		}
-		return json.Marshal(getDecisionResults(stub, decision.DecisionId))
-	} else if function == QUERY_GET_BALLOT {
-		//TODO: validate valid voter_id
-		//TODO: only allow for non-voted entries
-		//TODO: also return number of vote units for this voter (in map)
-		voter_id, err := getVoterId(stub)
-		if(nil != err){
-			return nil, err
-		}
-		voter := getVoter(stub, voter_id)
-		ballot := make([]Decision, 0)
-		for k, _ := range voter.DecisionIdToVoteCount {
-			if(voter.DecisionIdToVoteCount[k] > 0){
-			      ballot = append(ballot, getDecision(stub, k))
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var decision DecisionResults
+			var decision_bytes = []byte(args[0])
+			if err := json.Unmarshal(decision_bytes, &decision); err != nil {
+				return nil, err
 			}
+			return json.Marshal(getDecisionResults(stub, decision.DecisionId))
 		}
-		return json.Marshal(ballot)
+	} else if function == QUERY_GET_BALLOT {
+		if(hasRole(stub, ROLE_VOTER)) {
+			voter_id, err := getVoterId(stub)
+			if (nil != err) {
+				return nil, err
+			}
+			voter := getVoter(stub, voter_id)
+			ballot := make([]Decision, 0)
+			for k, _ := range voter.DecisionIdToVoteCount {
+				if (voter.DecisionIdToVoteCount[k] > 0) {
+					ballot = append(ballot, getDecision(stub, k))
+				}
+			}
+			return json.Marshal(ballot)
+		}
 	}
 	return nil, nil
 }

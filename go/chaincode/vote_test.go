@@ -97,6 +97,7 @@ func checkQuery(t *testing.T, stub *shim.MockStub, function string, args []strin
 }
 
 func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
+	mockCert()
 	scc := new(VoteChaincode)
 	stub := shim.NewMockStub("vote", scc)
 
@@ -108,6 +109,7 @@ func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
+	mockCert()
 	scc := new(VoteChaincode)
 
 	stub := shim.NewMockStub("vote", scc)

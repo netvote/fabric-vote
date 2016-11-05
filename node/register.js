@@ -1,11 +1,12 @@
 
-var username;
+var username, role;
 if(process.argv.length < 3){
     console.error("Parameter required: username")
     process.exit(1);
 }
 
 username = process.argv[2];
+role = process.argv[3];
 
 var hfc = require("hfc");
 
@@ -34,7 +35,8 @@ chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
         enrollmentID: userName,
         affiliation: "company_a",
         attributes: [
-            { name: "voter_id", value: userName }
+            { name: "voter_id", value: userName },
+            { name: "role", value: role}
         ]
     };
 
