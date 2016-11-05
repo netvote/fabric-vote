@@ -34,7 +34,7 @@ chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
         enrollmentID: userName,
         affiliation: "company_a",
         attributes: [
-            { name: "role", value: "voter" }
+            { name: "voter_id", value: userName }
         ]
     };
 

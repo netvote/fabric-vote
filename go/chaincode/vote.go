@@ -398,7 +398,9 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 		voter := getVoter(stub, voter_id)
 		ballot := make([]Decision, 0)
 		for k, _ := range voter.DecisionIdToVoteCount {
-			ballot = append(ballot, getDecision(stub, k))
+			if(voter.DecisionIdToVoteCount[k] > 0){
+			      ballot = append(ballot, getDecision(stub, k))
+			}
 		}
 		return json.Marshal(ballot)
 	}
