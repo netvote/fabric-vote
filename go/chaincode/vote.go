@@ -38,6 +38,9 @@ const FUNC_ALLOCATE_BALLOT_VOTES = "allocate_ballot_votes"
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT = "get_ballot"
 
+type VoteChaincode struct {
+}
+
 type Decision struct {
 	Id      string
 	Name    string
@@ -106,6 +109,18 @@ func getAccountId(stub shim.ChaincodeStubInterface)(string){
 		panic("INVALID account ID")
 	}
 	return string(account_id_bytes)
+}
+
+func getVoterId(stub shim.ChaincodeStubInterface) (string){
+	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
+	if(os.Getenv("TEST_ENV") != ""){
+		return "slanders"
+	}
+	voter_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_VOTER_ID)
+	if(nil != err){
+		panic("invalid voter_id")
+	}
+	return string(voter_id_bytes)
 }
 
 func validate(stub shim.ChaincodeStubInterface, vote Vote){
@@ -304,18 +319,6 @@ func getNow() (int64){
 	return time.Now().UnixNano()
 }
 
-func getVoterId(stub shim.ChaincodeStubInterface) (string){
-	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
-	if(os.Getenv("TEST_ENV") != ""){
-		return "slanders"
-	}
-	voter_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_VOTER_ID)
-	if(nil != err){
-		panic("invalid voter_id")
-	}
-	return string(voter_id_bytes)
-}
-
 func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
 	if(os.Getenv("TEST_ENV") != ""){
 		return true
@@ -337,33 +340,21 @@ func addDecisionToChain(stub shim.ChaincodeStubInterface, decision Decision) ([]
 	return nil
 }
 
-func AddDecision(stub shim.ChaincodeStubInterface, decision Decision) ([]byte, error){
+func AddDecision(stub shim.ChaincodeStubInterface, decision Decision){
 	addDecisionToChain(stub, decision)
 	if(decision.BallotId != ""){
 		addDecisionToBallot(stub, decision.BallotId, decision.Id)
 	}
-	return nil, nil
 }
 
-func AddVoter(stub shim.ChaincodeStubInterface, voter Voter) ([]byte, error){
+func AddVoter(stub shim.ChaincodeStubInterface, voter Voter){
 	if(voter.DecisionIdToVoteCount == nil){
 		voter.DecisionIdToVoteCount = make(map[string]int)
 	}
 	if(voter.Partitions == nil){
 		voter.Partitions = []string{}
 	}
-	var voter_json, err = json.Marshal(voter)
-	if err != nil {
-		return nil, err
-	}
-
-	stub.PutState(getKey(stub, TYPE_VOTER, voter.Id), voter_json)
-	return nil, nil
-}
-
-
-// SimpleChaincode example simple Chaincode implementation
-type VoteChaincode struct {
+	saveVoter(stub, voter)
 }
 
 func parseArg(arg string, value interface{}){
@@ -385,7 +376,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decision Decision
 			parseArg(args[0], &decision)
-			result, err = AddDecision(stub, decision)
+			AddDecision(stub, decision)
 		}
 	} else if function == FUNC_ADD_BALLOT {
 		if(hasRole(stub, ROLE_ADMIN)) {
@@ -393,12 +384,15 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			parseArg(args[0], &ballotDecisions)
 			ballot := AddBallot(stub, ballotDecisions)
 			result, err =  json.Marshal(ballot)
+			if(err != nil){
+				panic("error marshalling result")
+			}
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var voter Voter
 			parseArg(args[0], &voter)
-			result, err =  AddVoter(stub, voter)
+			AddVoter(stub, voter)
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
@@ -417,15 +411,6 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		err = errors.New("Invalid Function: "+function)
 	}
 	return result, err
-}
-
-func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	return handleInvoke(stub, function, args)
-}
-
-// Init chain code
-func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error)  {
-	return nil, nil
 }
 
 func handleQuery(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error) {
@@ -457,7 +442,16 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 	return
 }
 
-// Query callback representing the query of a chaincode
+// CHAINCODE INTERFACE METHODS
+
+func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	return handleInvoke(stub, function, args)
+}
+
+func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error)  {
+	return nil, nil
+}
+
 func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	return handleQuery(stub, function, args)
 }
