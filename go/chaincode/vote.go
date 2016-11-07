@@ -203,7 +203,7 @@ func saveDecision(stub shim.ChaincodeStubInterface, decision Decision){
 	saveState(stub, TYPE_DECISION, decision.Id, decision)
 }
 
-func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) {
+func AllocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) {
 
 	ballot := getBallot(stub, ballotId)
 	if ballot.Private {
@@ -231,7 +231,7 @@ func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 
 }
 
-func saveBallotDecisions(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
+func AddBallot(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
 	ballot := Ballot{Id: stub.GetTxID(), Name: ballotDecisions.Name, Decisions: []string{}}
 
 	for _, decision := range ballotDecisions.Decisions {
@@ -256,7 +256,7 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
-func castVote(stub shim.ChaincodeStubInterface, vote Vote){
+func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
 	validate(stub, vote)
 
 	voter := getVoter(stub, vote.VoterId)
@@ -391,7 +391,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballotDecisions BallotDecisions
 			parseArg(args[0], &ballotDecisions)
-			ballot := saveBallotDecisions(stub, ballotDecisions)
+			ballot := AddBallot(stub, ballotDecisions)
 			result, err =  json.Marshal(ballot)
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
@@ -405,13 +405,13 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			voter_id := getVoterId(stub)
 			var ballot Ballot
 			parseArg(args[0], &ballot)
-			allocateVotes(stub, voter_id, ballot.Id)
+			AllocateVotes(stub, voter_id, ballot.Id)
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
 			var vote Vote
 			parseArg(args[0], &vote)
-			castVote(stub, vote)
+			CastVote(stub, vote)
 		}
 	} else{
 		err = errors.New("Invalid Function: "+function)
