@@ -139,7 +139,7 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 	stub.MockTransactionStart("test-invoke-add-ballot")
 
 	checkInvokeWithResponse(t, stub, "add_ballot", "transaction-id",
-		[]string{`{"Name":"Nov 8, 2016","Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}]}`},
+		[]string{`{"Ballot":{"Name":"Nov 8, 2016"}, "Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}]}`},
 		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false}`)
 
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false}`)
@@ -197,7 +197,7 @@ func TestVoteChaincode_Invoke_AddPrivateBallot(t *testing.T){
 	stub.MockTransactionStart("test-invoke-add-ballot")
 
 	checkInvokeWithResponse(t, stub, "add_ballot", "transaction-id",
-		[]string{`{"Name":"Nov 8, 2016","Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}],"Private":true}`},
+		[]string{`{"Ballot":{"Name":"Nov 8, 2016", "Private":true}, "Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}]}`},
 		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":true}`)
 
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":true}`)
