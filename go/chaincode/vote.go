@@ -12,19 +12,19 @@ import (
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
 //TODO: add time windows for ballots/decisions? to allow valid voting periods
-//TODO: add tenant ID to keys to form prefix for multi-tenancy (e.g., /{TENANT_ID}/{OBJECT_TYPE}/{ID}
 
 //object prefixes
-const VOTER_PREFIX = "VOTER_"
-const DECISION_PREFIX = "DECISION_"
-const RESULTS_PREFIX = "RESULTS_"
-const BALLOT_PREFIX = "BALLOT_"
+const TYPE_VOTER = "VOTER"
+const TYPE_DECISION = "DECISION"
+const TYPE_RESULTS = "RESULTS"
+const TYPE_BALLOT = "BALLOT"
 
 // voter partition (defaults)
 const PARTITION_ALL = "ALL"
 
 const ATTRIBUTE_ROLE = "role"
 const ATTRIBUTE_VOTER_ID = "voter_id"
+const ATTRIBUTE_ACCOUNT_ID = "account_id"
 
 const ROLE_ADMIN = "admin"
 const ROLE_VOTER = "voter"
@@ -91,6 +91,27 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
+func getKey(stub shim.ChaincodeStubInterface, objectType string, objectId string) (string){
+	accountId, err := getAccountId(stub)
+	if(err != nil){
+		panic("INVALID account ID")
+	}
+	return accountId+"/"+objectType+"/"+objectId
+}
+
+func getAccountId(stub shim.ChaincodeStubInterface)(string, error){
+	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
+	if(os.Getenv("TEST_ENV") != ""){
+		return "test", nil
+	}
+
+	account_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_ACCOUNT_ID)
+	if(nil != err){
+		return "", err
+	}
+	return string(account_id_bytes), nil
+}
+
 func validate(stub shim.ChaincodeStubInterface, vote Vote) (error){
 	var voter = getVoter(stub, vote.VoterId)
 	for _, decision := range vote.Decisions {
@@ -126,7 +147,7 @@ func validate(stub shim.ChaincodeStubInterface, vote Vote) (error){
 func getDecision(stub shim.ChaincodeStubInterface, decisionId string) (Decision){
 	var d Decision
 	var decisionConfig([]byte)
-	decisionConfig, _ = stub.GetState(DECISION_PREFIX+decisionId)
+	decisionConfig, _ = stub.GetState(getKey(stub, TYPE_DECISION, decisionId))
 
 	json.Unmarshal(decisionConfig, &d)
 	return d
@@ -135,7 +156,7 @@ func getDecision(stub shim.ChaincodeStubInterface, decisionId string) (Decision)
 func getDecisionResults(stub shim.ChaincodeStubInterface, decisionId string) (DecisionResults){
 	var d DecisionResults
 	var config([]byte)
-	config, _ = stub.GetState(RESULTS_PREFIX+decisionId)
+	config, _ = stub.GetState(getKey(stub, TYPE_RESULTS, decisionId))
 	json.Unmarshal(config, &d)
 	return d
 }
@@ -145,7 +166,7 @@ func saveDecisionResults(stub shim.ChaincodeStubInterface, decision DecisionResu
 	if err != nil {
 		return errors.New("Invalid JSON!")
 	}
-	stub.PutState(RESULTS_PREFIX+decision.DecisionId, decision_json)
+	stub.PutState(getKey(stub, TYPE_RESULTS, decision.DecisionId), decision_json)
 	return nil
 }
 
@@ -154,14 +175,14 @@ func saveVoter(stub shim.ChaincodeStubInterface, v Voter) (error){
 	if err != nil {
 		return errors.New("Invalid JSON!")
 	}
-	stub.PutState(VOTER_PREFIX+v.Id, voter_json)
+	stub.PutState(getKey(stub, TYPE_VOTER, v.Id), voter_json)
 	return nil
 }
 
 func getVoter(stub shim.ChaincodeStubInterface, voterId string) (Voter) {
 	var v Voter
 	var v_json([]byte)
-	v_json, _ = stub.GetState(VOTER_PREFIX+voterId)
+	v_json, _ = stub.GetState(getKey(stub, TYPE_VOTER, voterId))
 
 	json.Unmarshal(v_json, &v)
 	return v
@@ -173,7 +194,7 @@ func saveDecision(stub shim.ChaincodeStubInterface, decision Decision) (error){
 	if err != nil {
 		return errors.New("Invalid JSON!")
 	}
-	stub.PutState(DECISION_PREFIX+decision.Id, decision_json)
+	stub.PutState(getKey(stub, TYPE_DECISION, decision.Id), decision_json)
 	return nil
 }
 
@@ -224,14 +245,14 @@ func saveBallot(stub shim.ChaincodeStubInterface, ballot Ballot)(error){
 	if err != nil {
 		return errors.New("Invalid JSON!")
 	}
-	stub.PutState(BALLOT_PREFIX+ballot.Id, ballot_json)
+	stub.PutState(getKey(stub, TYPE_BALLOT, ballot.Id), ballot_json)
 	return nil
 }
 
 func getBallot(stub shim.ChaincodeStubInterface, ballotId string)(Ballot){
 	var b Ballot
 	var config([]byte)
-	config, _ = stub.GetState(BALLOT_PREFIX+ballotId)
+	config, _ = stub.GetState(getKey(stub, TYPE_BALLOT, ballotId))
 	if(config == nil){
 		return b
 	}
@@ -357,7 +378,7 @@ func AddVoter(stub shim.ChaincodeStubInterface, voter Voter) ([]byte, error){
 		return nil, err
 	}
 
-	stub.PutState(VOTER_PREFIX+voter.Id, voter_json)
+	stub.PutState(getKey(stub, TYPE_VOTER, voter.Id), voter_json)
 	return nil, nil
 }
 
