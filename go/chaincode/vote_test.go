@@ -188,6 +188,24 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 	resetTime()
 }
 
+func TestVoteChaincode_Invoke_AddPrivateBallot(t *testing.T){
+	mockEnv()
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-ballot")
+
+	checkInvokeWithResponse(t, stub, "add_ballot", "transaction-id",
+		[]string{`{"Name":"Nov 8, 2016","Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}],"Private":true}`},
+		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":true}`)
+
+	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":true}`)
+	checkState(t, stub, "test/DECISION/test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}`)
+
+	checkInvokeError(t, stub, "allocate_ballot_votes", []string{`{"Id":"transaction-id"}`}, "unauthorized")
+}
+
 func TestVoteChaincode_Invoke_AddVoter(t *testing.T) {
 	scc := new(VoteChaincode)
 	stub := shim.NewMockStub("vote", scc)

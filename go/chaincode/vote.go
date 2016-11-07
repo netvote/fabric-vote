@@ -57,6 +57,7 @@ type Ballot struct{
 
 type BallotDecisions struct{
 	Name string
+	Private bool
 	Decisions []Decision
 }
 
@@ -186,7 +187,6 @@ func saveState(stub shim.ChaincodeStubInterface, objectType string, id string, o
 	}
 }
 
-
 func saveDecisionResults(stub shim.ChaincodeStubInterface, decision DecisionResults){
 	saveState(stub, TYPE_RESULTS, decision.DecisionId, decision)
 }
@@ -217,7 +217,6 @@ func AllocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 		voter = getVoter(stub, voterId)
 	}
 
-
 	for _, decisionId := range ballot.Decisions {
 		decision := getDecision(stub, decisionId)
 
@@ -232,7 +231,7 @@ func AllocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 }
 
 func AddBallot(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
-	ballot := Ballot{Id: stub.GetTxID(), Name: ballotDecisions.Name, Decisions: []string{}}
+	ballot := Ballot{Id: stub.GetTxID(), Name: ballotDecisions.Name, Decisions: []string{}, Private: ballotDecisions.Private}
 
 	for _, decision := range ballotDecisions.Decisions {
 		decision.BallotId = ballot.Id
