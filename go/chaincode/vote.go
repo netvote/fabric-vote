@@ -217,8 +217,8 @@ func saveDecision(stub shim.ChaincodeStubInterface, decision Decision){
 	saveState(stub, TYPE_DECISION, decision.Id, decision)
 }
 
-func AllocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) {
-
+func AllocateVotesToSelf(stub shim.ChaincodeStubInterface, ballotId string) {
+	voterId := getVoterId(stub)
 	ballot := getBallot(stub, ballotId)
 	if ballot.Private {
 		panic("unauthorized")
@@ -241,7 +241,6 @@ func AllocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 		}
 	}
 	saveVoter(stub, voter)
-
 }
 
 func AddBallot(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
@@ -289,7 +288,7 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
 
 			//cast vote for this decision
 			decisionResults.Results[PARTITION_ALL][selection] += vote_count
-			//remove votes from voter
+			//if not repeatable, remove votes from voter
 			if(!decision.Repeatable){
 				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
 			}
@@ -396,10 +395,9 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			voter_id := getVoterId(stub)
 			var ballot Ballot
 			parseArg(args[0], &ballot)
-			AllocateVotes(stub, voter_id, ballot.Id)
+			AllocateVotesToSelf(stub, ballot.Id)
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
