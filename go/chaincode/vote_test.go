@@ -8,9 +8,13 @@ import (
 	"strconv"
 )
 
-func mockCert(){
+func mockEnv(){
 	//makes certificate test/VOTER/id return slanders
 	os.Setenv("TEST_ENV","1")
+}
+
+func unmockEnv(){
+	os.Unsetenv("TEST_ENV")
 }
 
 func mockTime(timeNS int64){
@@ -104,8 +108,18 @@ func checkQuery(t *testing.T, stub *shim.MockStub, function string, args []strin
 	}
 }
 
+func TestVoteChaincode_Invoke_AddDecision_Error(t *testing.T) {
+	unmockEnv()
+	scc := new(VoteChaincode)
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-decision")
+
+	checkInvokeError(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`}, "unauthorized")
+}
+
 func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
-	mockCert()
+	mockEnv()
 	scc := new(VoteChaincode)
 	stub := shim.NewMockStub("vote", scc)
 
@@ -117,7 +131,7 @@ func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
-	mockCert()
+	mockEnv()
 	scc := new(VoteChaincode)
 
 	stub := shim.NewMockStub("vote", scc)
@@ -134,7 +148,7 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 }
 
 func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
-	mockCert()
+	mockEnv()
 	scc := new(VoteChaincode)
 
 	stub := shim.NewMockStub("vote", scc)
@@ -152,7 +166,7 @@ func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
 }
 
 func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
-	mockCert()
+	mockEnv()
 	scc := new(VoteChaincode)
 
 	stub := shim.NewMockStub("vote", scc)

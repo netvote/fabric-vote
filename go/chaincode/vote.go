@@ -92,39 +92,35 @@ func stringInSlice(a string, list []string) bool {
 }
 
 func getKey(stub shim.ChaincodeStubInterface, objectType string, objectId string) (string){
-	accountId, err := getAccountId(stub)
-	if(err != nil){
-		panic("INVALID account ID")
-	}
-	return accountId+"/"+objectType+"/"+objectId
+	return getAccountId(stub)+"/"+objectType+"/"+objectId
 }
 
-func getAccountId(stub shim.ChaincodeStubInterface)(string, error){
+func getAccountId(stub shim.ChaincodeStubInterface)(string){
 	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
 	if(os.Getenv("TEST_ENV") != ""){
-		return "test", nil
+		return "test"
 	}
 
 	account_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_ACCOUNT_ID)
-	if(nil != err){
-		return "", err
+	if(nil != err || string(account_id_bytes) == ""){
+		panic("INVALID account ID")
 	}
-	return string(account_id_bytes), nil
+	return string(account_id_bytes)
 }
 
-func validate(stub shim.ChaincodeStubInterface, vote Vote) (error){
+func validate(stub shim.ChaincodeStubInterface, vote Vote){
 	var voter = getVoter(stub, vote.VoterId)
 	for _, decision := range vote.Decisions {
 		d := getDecision(stub, decision.DecisionId)
 		if(voter.DecisionIdToVoteCount == nil) {
-			return errors.New("This voter has no votes")
+			panic("This voter has no votes")
 		}
 		if(d.ResponsesRequired != len(decision.Selections)){
-			return errors.New("All selections must be made")
+			panic("All selections must be made")
 		}
 		if(d.Repeatable){
 			if(voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-d.VoteDelayMS))){
-				return errors.New("Already voted this period")
+				panic("Already voted this period")
 			}
 		}
 		var total int= 0
@@ -132,16 +128,15 @@ func validate(stub shim.ChaincodeStubInterface, vote Vote) (error){
 			total += sel
 		}
 		if(total != voter.DecisionIdToVoteCount[decision.DecisionId]){
-			return errors.New("All votes must be cast")
+			panic("All votes must be cast")
 		}
 
 		for k,_ := range decision.Selections {
 			if(!stringInSlice(k, d.Options)){
-				return errors.New("Invalid option: "+k)
+				panic("Invalid option: "+k)
 			}
 		}
 	}
-	return nil
 }
 
 func getDecision(stub shim.ChaincodeStubInterface, decisionId string) (Decision){
@@ -272,11 +267,8 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
-func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
-	var validation_errors = validate(stub, vote)
-	if validation_errors != nil {
-		return nil, validation_errors
-	}
+func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
+	validate(stub, vote)
 
 	voter := getVoter(stub, vote.VoterId)
 	results_array := make([]DecisionResults, 0)
@@ -294,9 +286,7 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 			//cast vote for this decision
 			decisionResults.Results[PARTITION_ALL][selection] += vote_count
 			//remove votes from voter
-			if(decision.Repeatable){
-
-			}else {
+			if(!decision.Repeatable){
 				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
 			}
 
@@ -315,8 +305,6 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 	}
 	voter.LastVoteTimestampNS = getNow()
 	saveVoter(stub, voter)
-
-	return nil, nil
 }
 
 func getNow() (int64){
@@ -327,17 +315,16 @@ func getNow() (int64){
 	return time.Now().UnixNano()
 }
 
-func getVoterId(stub shim.ChaincodeStubInterface) (string, error){
+func getVoterId(stub shim.ChaincodeStubInterface) (string){
 	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
 	if(os.Getenv("TEST_ENV") != ""){
-		return "slanders", nil
+		return "slanders"
 	}
-
 	voter_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_VOTER_ID)
 	if(nil != err){
-		return "", err
+		panic("invalid voter_id")
 	}
-	return string(voter_id_bytes), nil
+	return string(voter_id_bytes)
 }
 
 func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
@@ -345,6 +332,10 @@ func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
 		return true
 	}
 	result, _ := stub.VerifyAttribute(ATTRIBUTE_ROLE, []byte(role))
+	if(!result){
+		fmt.Println("panic!")
+		panic("unauthorized")
+	}
 	return result
 }
 
@@ -388,7 +379,14 @@ type VoteChaincode struct {
 }
 
 
-func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error){
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%v", r))
+			fmt.Printf("error: %v\n",err)
+		}
+	}()
+
 	if function == FUNC_ADD_DECISION {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decision Decision
@@ -396,9 +394,8 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			if err := json.Unmarshal(decision_bytes, &decision); err != nil {
 				return nil, err
 			}
-			return AddDecision(stub, decision)
+			result, err = AddDecision(stub, decision)
 		}
-
 	} else if function == FUNC_ADD_BALLOT {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballotDecisions BallotDecisions
@@ -407,7 +404,7 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 				return nil, err
 			}
 			ballot := saveBallotDecisions(stub, ballotDecisions)
-			return json.Marshal(ballot)
+			result, err =  json.Marshal(ballot)
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
@@ -416,14 +413,11 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			if err := json.Unmarshal(voter_bytes, &voter); err != nil {
 				return nil, err
 			}
-			return AddVoter(stub, voter)
+			result, err =  AddVoter(stub, voter)
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			voter_id, err := getVoterId(stub)
-			if (nil != err) {
-				return nil, err
-			}
+			voter_id := getVoterId(stub)
 			var ballot Ballot
 			var ballot_bytes = []byte(args[0])
 			if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
@@ -441,24 +435,30 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			if err := json.Unmarshal(vote_bytes, &vote); err != nil {
 				return nil, err
 			}
-			return CastVote(stub, vote)
+			CastVote(stub, vote)
 		}
 	} else{
-		return nil, errors.New("Invalid Function: "+function)
+		err = errors.New("Invalid Function: "+function)
 	}
-
-	return nil, nil
+	return result, err
 }
 
-
+func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	return handleInvoke(stub, function, args)
+}
 
 // Init chain code
 func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error)  {
 	return nil, nil
 }
 
-// Query callback representing the query of a chaincode
-func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func handleQuery(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%v", r))
+			fmt.Printf("error: %v\n",err)
+		}
+	}()
 	if function == QUERY_GET_RESULTS {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decision DecisionResults
@@ -466,14 +466,11 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 			if err := json.Unmarshal(decision_bytes, &decision); err != nil {
 				return nil, err
 			}
-			return json.Marshal(getDecisionResults(stub, decision.DecisionId))
+			result, err = json.Marshal(getDecisionResults(stub, decision.DecisionId))
 		}
 	} else if function == QUERY_GET_BALLOT {
 		if(hasRole(stub, ROLE_VOTER)) {
-			voter_id, err := getVoterId(stub)
-			if (nil != err) {
-				return nil, err
-			}
+			voter_id := getVoterId(stub)
 			voter := getVoter(stub, voter_id)
 			ballot := make([]Decision, 0)
 			for k, _ := range voter.DecisionIdToVoteCount {
@@ -481,10 +478,15 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 					ballot = append(ballot, getDecision(stub, k))
 				}
 			}
-			return json.Marshal(ballot)
+			result, err = json.Marshal(ballot)
 		}
 	}
-	return nil, nil
+	return
+}
+
+// Query callback representing the query of a chaincode
+func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	return handleQuery(stub, function, args)
 }
 
 func main() {
