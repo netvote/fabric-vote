@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"os"
 	"time"
+	"strconv"
 )
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
 //TODO: add time windows for ballots/decisions? to allow valid voting periods
-//TODO: add repeatable votes
 //TODO: add tenant ID to keys to form prefix for multi-tenancy (e.g., /{TENANT_ID}/{OBJECT_TYPE}/{ID}
 
 //object prefixes
@@ -44,7 +44,7 @@ type Decision struct {
 	BallotId string
 	Options []string
 	ResponsesRequired int
-	VoteRate time.Duration
+	VoteDelayMS int64
 	Repeatable bool
 }
 
@@ -69,7 +69,7 @@ type Voter struct {
 	Id string
 	Partitions []string
 	DecisionIdToVoteCount map[string]int
-	last_vote_time time.Time
+	LastVoteTimestampNS int64
 }
 
 type Vote struct {
@@ -100,6 +100,11 @@ func validate(stub shim.ChaincodeStubInterface, vote Vote) (error){
 		}
 		if(d.ResponsesRequired != len(decision.Selections)){
 			return errors.New("All selections must be made")
+		}
+		if(d.Repeatable){
+			if(voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-d.VoteDelayMS))){
+				return errors.New("Already voted this period")
+			}
 		}
 		var total int= 0
 		for _, sel := range decision.Selections{
@@ -258,6 +263,7 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 	for _, voter_decision := range vote.Decisions {
 
 		decisionResults := getDecisionResults(stub, voter_decision.DecisionId)
+		decision := getDecision(stub,voter_decision.DecisionId)
 
 		for selection, vote_count := range voter_decision.Selections {
 			if(nil == decisionResults.Results[PARTITION_ALL]){
@@ -267,7 +273,11 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 			//cast vote for this decision
 			decisionResults.Results[PARTITION_ALL][selection] += vote_count
 			//remove votes from voter
-			voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
+			if(decision.Repeatable){
+
+			}else {
+				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
+			}
 
 			for _, partition := range voter.Partitions {
 				if(nil == decisionResults.Results[partition]){
@@ -282,10 +292,18 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 	for _, d := range results_array {
 		saveDecisionResults(stub, d)
 	}
-	voter.last_vote_time = time.Now()
+	voter.LastVoteTimestampNS = getNow()
 	saveVoter(stub, voter)
 
 	return nil, nil
+}
+
+func getNow() (int64){
+	if(os.Getenv("TEST_TIME") != ""){
+		i, _ := strconv.ParseInt(os.Getenv("TEST_TIME"), 10, 64)
+		return i
+	}
+	return time.Now().UnixNano()
 }
 
 func getVoterId(stub shim.ChaincodeStubInterface) (string, error){
