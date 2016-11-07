@@ -180,7 +180,10 @@ func saveState(stub shim.ChaincodeStubInterface, objectType string, id string, o
 	if err != nil {
 		panic("Invalid JSON while saving results")
 	}
-	stub.PutState(getKey(stub, objectType, id), json_bytes)
+	put_err := stub.PutState(getKey(stub, objectType, id), json_bytes)
+	if(put_err != nil){
+		panic("Error while putting type:"+objectType+", id:"+id)
+	}
 }
 
 
@@ -253,7 +256,7 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
-func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
+func castVote(stub shim.ChaincodeStubInterface, vote Vote){
 	validate(stub, vote)
 
 	voter := getVoter(stub, vote.VoterId)
@@ -408,7 +411,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_VOTER)) {
 			var vote Vote
 			parseArg(args[0], &vote)
-			CastVote(stub, vote)
+			castVote(stub, vote)
 		}
 	} else{
 		err = errors.New("Invalid Function: "+function)
