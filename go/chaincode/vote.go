@@ -429,7 +429,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			voter_id := getVoterId(stub)
 			voter := getVoter(stub, voter_id)
 			ballot := make([]Decision, 0)
-			for k, _ := range voter.DecisionIdToVoteCount {
+			for k := range voter.DecisionIdToVoteCount {
 				if (voter.DecisionIdToVoteCount[k] > 0) {
 					ballot = append(ballot, getDecision(stub, k))
 				}
