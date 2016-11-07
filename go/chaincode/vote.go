@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"netvote/go/chaincode/domain"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
 	"os"
@@ -13,18 +14,11 @@ import (
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
 //TODO: add time windows for ballots/decisions? to allow valid voting periods
 
-//object prefixes
-const TYPE_VOTER = "VOTER"
-const TYPE_DECISION = "DECISION"
-const TYPE_RESULTS = "RESULTS"
-const TYPE_BALLOT = "BALLOT"
-
 // voter partition (defaults)
 const PARTITION_ALL = "ALL"
 
 const ATTRIBUTE_ROLE = "role"
 const ATTRIBUTE_VOTER_ID = "voter_id"
-const ATTRIBUTE_ACCOUNT_ID = "account_id"
 
 const ROLE_ADMIN = "admin"
 const ROLE_VOTER = "voter"
@@ -41,50 +35,6 @@ const QUERY_GET_BALLOT = "get_ballot"
 type VoteChaincode struct {
 }
 
-type Decision struct {
-	Id      string
-	Name    string
-	BallotId string
-	Options []string
-	ResponsesRequired int
-	VoteDelayMS int64
-	Repeatable bool
-}
-
-type Ballot struct{
-	Id string
-	Name string
-	Decisions []string
-	Private bool
-}
-
-type BallotDecisions struct{
-	Ballot Ballot
-	Decisions []Decision
-}
-
-type DecisionResults struct{
-	DecisionId string
-	Results map[string]map[string]int
-}
-
-type Voter struct {
-	Id string
-	Partitions []string
-	DecisionIdToVoteCount map[string]int
-	LastVoteTimestampNS int64
-}
-
-type Vote struct {
-	VoterId string
-	Decisions []VoterDecision
-}
-
-type VoterDecision struct {
-	DecisionId string
-	Selections map[string]int
-}
-
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -92,23 +42,6 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
-}
-
-func getKey(stub shim.ChaincodeStubInterface, objectType string, objectId string) (string){
-	return getAccountId(stub)+"/"+objectType+"/"+objectId
-}
-
-func getAccountId(stub shim.ChaincodeStubInterface)(string){
-	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
-	if(os.Getenv("TEST_ENV") != ""){
-		return "test"
-	}
-
-	account_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_ACCOUNT_ID)
-	if(nil != err || string(account_id_bytes) == ""){
-		panic("INVALID account ID")
-	}
-	return string(account_id_bytes)
 }
 
 func getVoterId(stub shim.ChaincodeStubInterface) (string){
@@ -123,10 +56,10 @@ func getVoterId(stub shim.ChaincodeStubInterface) (string){
 	return string(voter_id_bytes)
 }
 
-func validate(stub shim.ChaincodeStubInterface, vote Vote){
-	var voter = getVoter(stub, vote.VoterId)
+func validate(stateDao domain.StateDAO, vote domain.Vote){
+	var voter = stateDao.GetVoter(vote.VoterId)
 	for _, decision := range vote.Decisions {
-		d := getDecision(stub, decision.DecisionId)
+		d := stateDao.GetDecision(decision.DecisionId)
 		if(voter.DecisionIdToVoteCount == nil) {
 			panic("This voter has no votes")
 		}
@@ -154,85 +87,22 @@ func validate(stub shim.ChaincodeStubInterface, vote Vote){
 	}
 }
 
-// GET
-
-func getState(stub shim.ChaincodeStubInterface, objectType string, id string, value interface{}){
-	config, err := stub.GetState(getKey(stub, objectType, id))
-	if(err != nil){
-		panic("error getting "+objectType+" id:"+id)
-	}
-	json.Unmarshal(config, &value)
-}
-
-func getDecision(stub shim.ChaincodeStubInterface, decisionId string) (Decision){
-	var d Decision
-	getState(stub, TYPE_DECISION, decisionId, &d)
-	return d
-}
-
-func getDecisionResults(stub shim.ChaincodeStubInterface, decisionId string) (DecisionResults){
-	var d DecisionResults
-	getState(stub, TYPE_RESULTS, decisionId, &d)
-	return d
-}
-
-func getVoter(stub shim.ChaincodeStubInterface, voterId string) (Voter) {
-	var v Voter
-	getState(stub, TYPE_VOTER, voterId, &v)
-	return v
-}
-
-func getBallot(stub shim.ChaincodeStubInterface, ballotId string)(Ballot){
-	var b Ballot
-	getState(stub, TYPE_BALLOT, ballotId, &b)
-	return b
-}
-
-// SAVE
-
-func saveState(stub shim.ChaincodeStubInterface, objectType string, id string, object interface{}){
-	var json_bytes, err = json.Marshal(object)
-	if err != nil {
-		panic("Invalid JSON while saving results")
-	}
-	put_err := stub.PutState(getKey(stub, objectType, id), json_bytes)
-	if(put_err != nil){
-		panic("Error while putting type:"+objectType+", id:"+id)
-	}
-}
-
-func saveDecisionResults(stub shim.ChaincodeStubInterface, decision DecisionResults){
-	saveState(stub, TYPE_RESULTS, decision.DecisionId, decision)
-}
-
-func saveBallot(stub shim.ChaincodeStubInterface, ballot Ballot){
-	saveState(stub, TYPE_BALLOT, ballot.Id, ballot)
-}
-
-func saveVoter(stub shim.ChaincodeStubInterface, v Voter){
-	saveState(stub, TYPE_VOTER, v.Id, v)
-}
-
-func saveDecision(stub shim.ChaincodeStubInterface, decision Decision){
-	saveState(stub, TYPE_DECISION, decision.Id, decision)
-}
-
-func AllocateVotesToSelf(stub shim.ChaincodeStubInterface, ballotId string) {
-	voterId := getVoterId(stub)
-	ballot := getBallot(stub, ballotId)
+func allocateVotesToSelf(stateDao domain.StateDAO, ballotId string) {
+	voterId := getVoterId(stateDao.Stub)
+	ballot := stateDao.GetBallot(ballotId)
 	if ballot.Private {
 		panic("unauthorized")
 	}
 
-	voter := getVoter(stub, voterId)
+	voter := stateDao.GetVoter(voterId)
 	if(voter.Id == ""){
 		voter.Id = voterId
-		AddVoter(stub, voter)
-		voter = getVoter(stub, voterId)
+		addVoter(stateDao, voter)
+		voter = stateDao.GetVoter(voterId)
 	}
 
 	for _, decisionId := range ballot.Decisions {
-		decision := getDecision(stub, decisionId)
+		decision := stateDao.GetDecision(decisionId)
 
 		if _, exists := voter.DecisionIdToVoteCount[decisionId]; exists {
 			//already allocated for this, skip
@@ -240,29 +110,29 @@ func AllocateVotesToSelf(stub shim.ChaincodeStubInterface, ballotId string) {
 			voter.DecisionIdToVoteCount[decisionId] = decision.ResponsesRequired
 		}
 	}
-	saveVoter(stub, voter)
+	stateDao.SaveVoter(voter)
 }
 
-func AddBallot(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
+func addBallot(stateDao domain.StateDAO, ballotDecisions domain.BallotDecisions) (domain.Ballot){
 	ballot := ballotDecisions.Ballot
-	ballot.Id = stub.GetTxID()
+	ballot.Id = stateDao.Stub.GetTxID()
 	ballot.Decisions = []string{}
 
 	for _, decision := range ballotDecisions.Decisions {
 		decision.BallotId = ballot.Id
-		addDecisionToChain(stub, decision)
+		addDecisionToChain(stateDao, decision)
 		ballot.Decisions = append(ballot.Decisions, decision.Id)
 	}
 
-	saveBallot(stub, ballot)
+	stateDao.SaveBallot(ballot)
 	return ballot
 }
 
-func addDecisionToBallot(stub shim.ChaincodeStubInterface, ballotId string, decisionId string){
-	ballot := getBallot(stub, ballotId)
+func addDecisionToBallot(stateDao domain.StateDAO, ballotId string, decisionId string){
+	ballot := stateDao.GetBallot(ballotId)
 	if(ballot.Id == ""){
-		ballot = Ballot{Id: ballotId, Decisions: []string{decisionId}}
-		saveBallot(stub, ballot)
+		ballot = domain.Ballot{Id: ballotId, Decisions: []string{decisionId}}
+		stateDao.SaveBallot(ballot)
 	}
 }
 
@@ -270,16 +140,15 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
-func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
-	validate(stub, vote)
-
-	voter := getVoter(stub, vote.VoterId)
-	results_array := make([]DecisionResults, 0)
+func castVote(stateDao domain.StateDAO, vote domain.Vote){
+	validate(stateDao, vote)
+	voter := stateDao.GetVoter(vote.VoterId)
+	results_array := make([]domain.DecisionResults, 0)
 
 	for _, voter_decision := range vote.Decisions {
 
-		decisionResults := getDecisionResults(stub, voter_decision.DecisionId)
-		decision := getDecision(stub,voter_decision.DecisionId)
+		decisionResults := stateDao.GetDecisionResults(voter_decision.DecisionId)
+		decision := stateDao.GetDecision(voter_decision.DecisionId)
 
 		for selection, vote_count := range voter_decision.Selections {
 			if(nil == decisionResults.Results[PARTITION_ALL]){
@@ -304,10 +173,10 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote){
 
 	}
 	for _, d := range results_array {
-		saveDecisionResults(stub, d)
+		stateDao.SaveDecisionResults(d)
 	}
 	voter.LastVoteTimestampNS = getNow()
-	saveVoter(stub, voter)
+	stateDao.SaveVoter(voter)
 }
 
 func getNow() (int64){
@@ -329,31 +198,31 @@ func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
 	return result
 }
 
-func addDecisionToChain(stub shim.ChaincodeStubInterface, decision Decision) ([]byte){
+func addDecisionToChain(stateDao domain.StateDAO, decision domain.Decision) ([]byte){
 	if(decision.ResponsesRequired == 0) {
 		decision.ResponsesRequired = 1
 	}
-	results := DecisionResults { DecisionId: decision.Id, Results: make(map[string]map[string]int)}
-	saveDecision(stub, decision)
-	saveDecisionResults(stub, results)
+	results := domain.DecisionResults { DecisionId: decision.Id, Results: make(map[string]map[string]int)}
+	stateDao.SaveDecision(decision)
+	stateDao.SaveDecisionResults(results)
 	return nil
 }
 
-func AddDecision(stub shim.ChaincodeStubInterface, decision Decision){
-	addDecisionToChain(stub, decision)
+func addDecision(stateDao domain.StateDAO, decision domain.Decision){
+	addDecisionToChain(stateDao, decision)
 	if(decision.BallotId != ""){
-		addDecisionToBallot(stub, decision.BallotId, decision.Id)
+		addDecisionToBallot(stateDao, decision.BallotId, decision.Id)
 	}
 }
 
-func AddVoter(stub shim.ChaincodeStubInterface, voter Voter){
+func addVoter(stateDao domain.StateDAO, voter domain.Voter){
 	if(voter.DecisionIdToVoteCount == nil){
 		voter.DecisionIdToVoteCount = make(map[string]int)
 	}
 	if(voter.Partitions == nil){
 		voter.Partitions = []string{}
 	}
-	saveVoter(stub, voter)
+	stateDao.SaveVoter(voter)
 }
 
 func parseArg(arg string, value interface{}){
@@ -371,17 +240,19 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		}
 	}()
 
+	stateDao := domain.StateDAO{Stub: stub}
+
 	if function == FUNC_ADD_DECISION {
 		if(hasRole(stub, ROLE_ADMIN)) {
-			var decision Decision
+			var decision domain.Decision
 			parseArg(args[0], &decision)
-			AddDecision(stub, decision)
+			addDecision(stateDao, decision)
 		}
 	} else if function == FUNC_ADD_BALLOT {
 		if(hasRole(stub, ROLE_ADMIN)) {
-			var ballotDecisions BallotDecisions
+			var ballotDecisions domain.BallotDecisions
 			parseArg(args[0], &ballotDecisions)
-			ballot := AddBallot(stub, ballotDecisions)
+			ballot := addBallot(stateDao, ballotDecisions)
 			result, err =  json.Marshal(ballot)
 			if(err != nil){
 				panic("error marshalling result")
@@ -389,21 +260,21 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
-			var voter Voter
+			var voter domain.Voter
 			parseArg(args[0], &voter)
-			AddVoter(stub, voter)
+			addVoter(stateDao, voter)
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			var ballot Ballot
+			var ballot domain.Ballot
 			parseArg(args[0], &ballot)
-			AllocateVotesToSelf(stub, ballot.Id)
+			allocateVotesToSelf(stateDao, ballot.Id)
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			var vote Vote
+			var vote domain.Vote
 			parseArg(args[0], &vote)
-			CastVote(stub, vote)
+			castVote(stateDao, vote)
 		}
 	} else{
 		err = errors.New("Invalid Function: "+function)
@@ -418,20 +289,22 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			fmt.Printf("error: %v\n",err)
 		}
 	}()
+
+	stateDao := domain.StateDAO{Stub: stub}
 	if function == QUERY_GET_RESULTS {
 		if(hasRole(stub, ROLE_ADMIN)) {
-			var decisionResults DecisionResults
+			var decisionResults domain.DecisionResults
 			parseArg(args[0], &decisionResults)
-			result, err = json.Marshal(getDecisionResults(stub, decisionResults.DecisionId))
+			result, err = json.Marshal(stateDao.GetDecisionResults(decisionResults.DecisionId))
 		}
 	} else if function == QUERY_GET_BALLOT {
 		if(hasRole(stub, ROLE_VOTER)) {
 			voter_id := getVoterId(stub)
-			voter := getVoter(stub, voter_id)
-			ballot := make([]Decision, 0)
+			voter := stateDao.GetVoter(voter_id)
+			ballot := make([]domain.Decision, 0)
 			for k := range voter.DecisionIdToVoteCount {
 				if (voter.DecisionIdToVoteCount[k] > 0) {
-					ballot = append(ballot, getDecision(stub, k))
+					ballot = append(ballot, stateDao.GetDecision(k))
 				}
 			}
 			result, err = json.Marshal(ballot)
