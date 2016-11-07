@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
 	"os"
+	"time"
 )
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
@@ -41,12 +42,15 @@ type Decision struct {
 	BallotId string
 	Options []string
 	ResponsesRequired int
+	VoteRate time.Duration
+	Repeatable bool
 }
 
 type Ballot struct{
 	Id string
 	Name string
 	Decisions []string
+	Private bool
 }
 
 type BallotDecisions struct{
@@ -63,6 +67,7 @@ type Voter struct {
 	Id string
 	Partitions []string
 	DecisionIdToVoteCount map[string]int
+	last_vote_time time.Time
 }
 
 type Vote struct {
@@ -165,14 +170,20 @@ func saveDecision(stub shim.ChaincodeStubInterface, decision Decision) (error){
 	return nil
 }
 
-func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) {
+func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId string) (error) {
+
+	ballot := getBallot(stub, ballotId)
+	if ballot.Private {
+		return errors.New("Unauthorized")
+	}
+
 	voter := getVoter(stub, voterId)
 	if(voter.Id == ""){
 		voter.Id = voterId
 		AddVoter(stub, voter)
 		voter = getVoter(stub, voterId)
 	}
-	ballot := getBallot(stub, ballotId)
+
 
 	for _, decisionId := range ballot.Decisions {
 		decision := getDecision(stub, decisionId)
@@ -183,7 +194,8 @@ func allocateVotes(stub shim.ChaincodeStubInterface, voterId string, ballotId st
 			voter.DecisionIdToVoteCount[decisionId] = decision.ResponsesRequired
 		}
 	}
-	saveVoter(stub, voter)
+	return saveVoter(stub, voter)
+
 }
 
 func saveBallotDecisions(stub shim.ChaincodeStubInterface, ballotDecisions BallotDecisions) (Ballot){
@@ -249,7 +261,11 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 			if(nil == decisionResults.Results[PARTITION_ALL]){
 				decisionResults.Results[PARTITION_ALL] = map[string]int{selection: 0}
 			}
+
+			//cast vote for this decision
 			decisionResults.Results[PARTITION_ALL][selection] += vote_count
+			//remove votes from voter
+			voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
 
 			for _, partition := range voter.Partitions {
 				if(nil == decisionResults.Results[partition]){
@@ -259,11 +275,12 @@ func CastVote(stub shim.ChaincodeStubInterface, vote Vote) ([]byte, error){
 			}
 		}
 		results_array = append(results_array, decisionResults)
-		voter.DecisionIdToVoteCount[voter_decision.DecisionId] = 0
+
 	}
 	for _, d := range results_array {
 		saveDecisionResults(stub, d)
 	}
+	voter.last_vote_time = time.Now()
 	saveVoter(stub, voter)
 
 	return nil, nil
@@ -325,9 +342,6 @@ func AddVoter(stub shim.ChaincodeStubInterface, voter Voter) ([]byte, error){
 }
 
 
-
-
-
 // SimpleChaincode example simple Chaincode implementation
 type VoteChaincode struct {
 }
@@ -375,7 +389,10 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			if err := json.Unmarshal(ballot_bytes, &ballot); err != nil {
 				return nil, err
 			}
-			allocateVotes(stub, voter_id, ballot.Id)
+			err = allocateVotes(stub, voter_id, ballot.Id)
+			if(err != nil){
+				return nil, err
+			}
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {

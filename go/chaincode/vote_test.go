@@ -105,7 +105,7 @@ func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
 
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`})
 
-	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"","Options":["a","b"],"ResponsesRequired":1}`)
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"","Options":["a","b"],"ResponsesRequired":1,"VoteRate":0,"Repeatable":false}`)
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
@@ -118,10 +118,10 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 
 	checkInvokeWithResponse(t, stub, "add_ballot", "transaction-id",
 		[]string{`{"Name":"Nov 8, 2016","Decisions":[{"Id":"test-id","Name":"What is your decision?","Options":["a","b"],"ResponsesRequired":1}]}`},
-		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"]}`)
+		`{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false}`)
 
-	checkState(t, stub, "BALLOT_transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"]}`)
-	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":["a","b"],"ResponsesRequired":1}`)
+	checkState(t, stub, "BALLOT_transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false}`)
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":["a","b"],"ResponsesRequired":1,"VoteRate":0,"Repeatable":false}`)
 
 }
 
@@ -135,8 +135,8 @@ func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
 
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"]}`})
 
-	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1}`)
-	checkState(t, stub, "BALLOT_123-213412-34123-41234", `{"Id":"123-213412-34123-41234","Name":"","Decisions":["test-id"]}`)
+	checkState(t, stub, "DECISION_test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1,"VoteRate":0,"Repeatable":false}`)
+	checkState(t, stub, "BALLOT_123-213412-34123-41234", `{"Id":"123-213412-34123-41234","Name":"","Decisions":["test-id"],"Private":false}`)
 
 	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
 
@@ -202,8 +202,8 @@ func TestVoteChaincode_Invoke_CastVote(t *testing.T) {
 	checkState(t, stub, "VOTER_jsmith", 	`{"Id":"jsmith","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":1,"1912-us-president":1}}`)
 	checkState(t, stub, "VOTER_acooper", 	`{"Id":"acooper","Partitions":["us","ga","district-124"],"DecisionIdToVoteCount":{"1912-ga-governor":1,"1912-us-president":1}}`)
 
-	checkState(t, stub, "DECISION_1912-us-president", `{"Id":"1912-us-president","Name":"president","BallotId":"","Options":["Taft","Bryan"],"ResponsesRequired":1}`)
-	checkState(t, stub, "DECISION_1912-ga-governor", `{"Id":"1912-ga-governor","Name":"governor","BallotId":"","Options":["Mark","Sarah"],"ResponsesRequired":1}`)
+	checkState(t, stub, "DECISION_1912-us-president", `{"Id":"1912-us-president","Name":"president","BallotId":"","Options":["Taft","Bryan"],"ResponsesRequired":1,"VoteRate":0,"Repeatable":false}`)
+	checkState(t, stub, "DECISION_1912-ga-governor", `{"Id":"1912-ga-governor","Name":"governor","BallotId":"","Options":["Mark","Sarah"],"ResponsesRequired":1,"VoteRate":0,"Repeatable":false}`)
 
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "Decisions":[{"DecisionId":"1912-us-president", "Selections": {"Taft":1}}, {"DecisionId":"1912-ga-governor", "Selections": {"Sarah":1}}]}`})
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"jsmith", "Decisions":[{"DecisionId":"1912-us-president", "Selections": {"Bryan":1}}, {"DecisionId":"1912-ga-governor", "Selections": {"Mark":1}}]}`})
