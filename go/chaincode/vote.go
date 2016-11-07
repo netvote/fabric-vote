@@ -10,7 +10,9 @@ import (
 )
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
-//TODO: need to think about IDs and how to avoid collisions (probably should generate...right now not doing so)
+//TODO: add time windows for ballots/decisions? to allow valid voting periods
+//TODO: add repeatable votes
+//TODO: add tenant ID to keys to form prefix for multi-tenancy (e.g., /{TENANT_ID}/{OBJECT_TYPE}/{ID}
 
 //object prefixes
 const VOTER_PREFIX = "VOTER_"
@@ -368,7 +370,7 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			ballot := saveBallotDecisions(stub, ballotDecisions)
 			return json.Marshal(ballot)
 		}
-	}else if function == FUNC_ADD_VOTER { //TODO: may not need if voter creates himself
+	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var voter Voter
 			var voter_bytes = []byte(args[0])
@@ -378,7 +380,6 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
 			return AddVoter(stub, voter)
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
-		//TODO: authorize voter
 		if(hasRole(stub, ROLE_VOTER)) {
 			voter_id, err := getVoterId(stub)
 			if (nil != err) {
