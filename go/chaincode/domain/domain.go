@@ -17,7 +17,6 @@ const TYPE_DECISION = "DECISION"
 const TYPE_RESULTS = "RESULTS"
 const TYPE_BALLOT = "BALLOT"
 const TYPE_ACCOUNT_BALLOTS = "ACCOUNT_BALLOTS"
-
 const ATTRIBUTE_ACCOUNT_ID = "account_id"
 
 type Decision struct {
@@ -43,7 +42,7 @@ type BallotDecisions struct{
 }
 
 type DecisionResults struct{
-	DecisionId string
+	Id string
 	Results map[string]map[string]int
 }
 
@@ -55,7 +54,7 @@ type Voter struct {
 }
 
 type AccountBallots struct{
-	AccountId string
+	Id string
 	PublicBallotIds map[string]bool
 	PrivateBallotIds map[string]bool
 }
@@ -109,7 +108,7 @@ func (t *StateDAO) GetBallot(ballotId string)(Ballot){
 	return b
 }
 
-func (t *StateDAO) getAccountBallots()(AccountBallots){
+func (t *StateDAO) GetAccountBallots()(AccountBallots){
 	var accountBallots AccountBallots
 	t.getState(TYPE_ACCOUNT_BALLOTS, t.getAccountId(), &accountBallots)
 	return accountBallots
@@ -127,10 +126,10 @@ func (t *StateDAO) saveState(objectType string, id string, object interface{}){
 }
 
 func (t *StateDAO) addToAccountBallots(ballot Ballot){
-	accountBallots := t.getAccountBallots()
+	accountBallots := t.GetAccountBallots()
 	account_id := t.getAccountId()
-	if(accountBallots.AccountId != account_id){
-		accountBallots = AccountBallots{AccountId: account_id, PrivateBallotIds: make(map[string]bool), PublicBallotIds: make(map[string]bool)}
+	if(accountBallots.Id != account_id){
+		accountBallots = AccountBallots{Id: account_id, PrivateBallotIds: make(map[string]bool), PublicBallotIds: make(map[string]bool)}
 	}
 	if(ballot.Private){
 		accountBallots.PrivateBallotIds[ballot.Id] = true
@@ -144,7 +143,7 @@ func (t *StateDAO) addToAccountBallots(ballot Ballot){
 
 
 func (t *StateDAO) SaveDecisionResults(decision DecisionResults){
-	t.saveState(TYPE_RESULTS, decision.DecisionId, decision)
+	t.saveState(TYPE_RESULTS, decision.Id, decision)
 }
 
 func (t *StateDAO) SaveBallot(ballot Ballot){
