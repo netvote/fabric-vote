@@ -160,7 +160,7 @@ func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
 	checkState(t, stub, "test/DECISION/test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}`)
 	checkState(t, stub, "test/BALLOT/123-213412-34123-41234", `{"Id":"123-213412-34123-41234","Name":"","Decisions":["test-id"],"Private":false}`)
 
-	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"BallotId":"123-213412-34123-41234","VoterId":"slanders"}`})
 
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1},"LastVoteTimestampNS":0}`)
 }
@@ -174,7 +174,7 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 
 	//setup
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"]}`})
-	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"BallotId":"123-213412-34123-41234","VoterId":"slanders"}`})
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1},"LastVoteTimestampNS":0}`)
 
 	//cast votes
@@ -203,7 +203,7 @@ func TestVoteChaincode_Invoke_AddPrivateBallot(t *testing.T){
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":true}`)
 	checkState(t, stub, "test/DECISION/test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}`)
 
-	checkInvokeError(t, stub, "allocate_ballot_votes", []string{`{"Id":"transaction-id"}`}, "unauthorized")
+	checkInvokeError(t, stub, "allocate_ballot_votes", []string{`{"BallotId":"transaction-id","VoterId":"slanders"}`}, "unauthorized")
 }
 
 func TestVoteChaincode_Invoke_AddVoter(t *testing.T) {

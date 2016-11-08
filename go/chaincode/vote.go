@@ -35,6 +35,21 @@ const QUERY_GET_BALLOT = "get_ballot"
 type VoteChaincode struct {
 }
 
+type Vote struct {
+	VoterId string
+	Decisions []VoterDecision
+}
+
+type VoterDecision struct {
+	DecisionId string
+	Selections map[string]int
+}
+
+type BallotVoteAssignment struct {
+	VoterId string
+	BallotId string
+}
+
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -44,19 +59,7 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func getVoterId(stub shim.ChaincodeStubInterface) (string){
-	//testing hack because it's tricky to mock ReadCertAttribute - hardcoded to limit risk
-	if(os.Getenv("TEST_ENV") != ""){
-		return "slanders"
-	}
-	voter_id_bytes, err := stub.ReadCertAttribute(ATTRIBUTE_VOTER_ID)
-	if(nil != err){
-		panic("invalid voter_id")
-	}
-	return string(voter_id_bytes)
-}
-
-func validate(stateDao domain.StateDAO, vote domain.Vote){
+func validate(stateDao domain.StateDAO, vote Vote){
 	var voter = stateDao.GetVoter(vote.VoterId)
 	for _, decision := range vote.Decisions {
 		d := stateDao.GetDecision(decision.DecisionId)
@@ -87,8 +90,7 @@ func validate(stateDao domain.StateDAO, vote domain.Vote){
 	}
 }
 
-func allocateVotesToSelf(stateDao domain.StateDAO, ballotId string) {
-	voterId := getVoterId(stateDao.Stub)
+func allocateVotesToSelf(stateDao domain.StateDAO, ballotId string, voterId string) {
 	ballot := stateDao.GetBallot(ballotId)
 	if ballot.Private {
 		panic("unauthorized")
@@ -140,7 +142,7 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
-func castVote(stateDao domain.StateDAO, vote domain.Vote){
+func castVote(stateDao domain.StateDAO, vote Vote){
 	validate(stateDao, vote)
 	voter := stateDao.GetVoter(vote.VoterId)
 	results_array := make([]domain.DecisionResults, 0)
@@ -266,13 +268,13 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		}
 	} else if function == FUNC_ALLOCATE_BALLOT_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			var ballot domain.Ballot
-			parseArg(args[0], &ballot)
-			allocateVotesToSelf(stateDao, ballot.Id)
+			var bva BallotVoteAssignment
+			parseArg(args[0], &bva)
+			allocateVotesToSelf(stateDao, bva.BallotId, bva.VoterId)
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
-			var vote domain.Vote
+			var vote Vote
 			parseArg(args[0], &vote)
 			castVote(stateDao, vote)
 		}
@@ -299,8 +301,9 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 		}
 	} else if function == QUERY_GET_BALLOT {
 		if(hasRole(stub, ROLE_VOTER)) {
-			voter_id := getVoterId(stub)
-			voter := stateDao.GetVoter(voter_id)
+			var voter_obj domain.Voter
+			parseArg(args[0], &voter_obj)
+			voter := stateDao.GetVoter(voter_obj.Id)
 			ballot := make([]domain.Decision, 0)
 			for k := range voter.DecisionIdToVoteCount {
 				if (voter.DecisionIdToVoteCount[k] > 0) {

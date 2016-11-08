@@ -53,17 +53,6 @@ type Voter struct {
 	LastVoteTimestampNS int64
 }
 
-type Vote struct {
-	VoterId string
-	Decisions []VoterDecision
-}
-
-type VoterDecision struct {
-	DecisionId string
-	Selections map[string]int
-}
-
-
 
 func (t *StateDAO) getKey(objectType string, objectId string) (string){
 	return t.getAccountId()+"/"+objectType+"/"+objectId
