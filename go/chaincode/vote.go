@@ -16,9 +16,7 @@ import (
 
 // voter partition (defaults)
 const PARTITION_ALL = "ALL"
-
 const ATTRIBUTE_ROLE = "role"
-const ATTRIBUTE_VOTER_ID = "voter_id"
 
 const ROLE_ADMIN = "admin"
 const ROLE_VOTER = "voter"

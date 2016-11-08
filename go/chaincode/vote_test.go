@@ -183,7 +183,7 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0},"LastVoteTimestampNS":100}`)
 
 	//try to re-allocate votes, votes should remain at 0 for this decision
-	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"Id":"123-213412-34123-41234"}`})
+	checkInvoke(t, stub, "allocate_ballot_votes", []string{`{"BallotId":"123-213412-34123-41234","VoterId":"slanders"}`})
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0},"LastVoteTimestampNS":100}`)
 	resetTime()
 }
