@@ -85,7 +85,7 @@ func validate(stateDao domain.StateDAO, vote Vote){
 }
 
 func alreadyVoted(voter domain.Voter, decision domain.Decision)(bool){
-	return (voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-decision.VoteDelayMS)))
+	return (voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-decision.RepeatVoteDelayNS)))
 }
 
 func addBallotDecisionsToVoter(stateDao domain.StateDAO, ballot domain.Ballot, voter *domain.Voter, save bool){

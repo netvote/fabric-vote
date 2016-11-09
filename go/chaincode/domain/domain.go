@@ -20,13 +20,13 @@ const TYPE_ACCOUNT_BALLOTS = "ACCOUNT_BALLOTS"
 const ATTRIBUTE_ACCOUNT_ID = "account_id"
 
 type Decision struct {
-	Id      string
-	Name    string
-	BallotId string
-	Options []string
+	Id                string
+	Name              string
+	BallotId          string
+	Options           []string
 	ResponsesRequired int
-	VoteDelayMS int64
-	Repeatable bool
+	RepeatVoteDelayNS int64
+	Repeatable        bool
 }
 
 type Ballot struct{
