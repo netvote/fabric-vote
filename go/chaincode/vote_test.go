@@ -160,7 +160,7 @@ func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
 	checkState(t, stub, "test/DECISION/test-id", `{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}`)
 	checkState(t, stub, "test/BALLOT/123-213412-34123-41234", `{"Id":"123-213412-34123-41234","Name":"","Decisions":["test-id"],"Private":false}`)
 
-	checkInvoke(t, stub, "init_voter", []string{`{"Id":"slanders"}`})
+	checkInvokeWithResponse(t, stub, "init_voter", "txid",[]string{`{"Id":"slanders"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}]`)
 
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1},"LastVoteTimestampNS":0}`)
 
@@ -176,7 +176,9 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 
 	//setup
 	checkInvoke(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"]}`})
-	checkInvoke(t, stub, "init_voter", []string{`{"Id":"slanders"}`})
+
+	checkInvokeWithResponse(t, stub, "init_voter", "txid",[]string{`{"Id":"slanders"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"123-213412-34123-41234","Options":["a","b"],"ResponsesRequired":1,"VoteDelayMS":0,"Repeatable":false}]`)
+
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":1},"LastVoteTimestampNS":0}`)
 
 	//cast votes
@@ -185,7 +187,7 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0},"LastVoteTimestampNS":100}`)
 
 	//try to re-allocate votes, votes should remain at 0 for this decision
-	checkInvoke(t, stub, "init_voter", []string{`{"VoterId":"slanders"}`})
+	checkInvokeWithResponse(t, stub, "init_voter", "txid",[]string{`{"Id":"slanders"}`}, `[]`)
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Partitions":[],"DecisionIdToVoteCount":{"test-id":0},"LastVoteTimestampNS":100}`)
 	resetTime()
 }

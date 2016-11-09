@@ -64,7 +64,7 @@ func validate(stateDao domain.StateDAO, vote Vote){
 			panic("All selections must be made")
 		}
 		if(d.Repeatable){
-			if(voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-d.VoteDelayMS))){
+			if(alreadyVoted(voter, d)){
 				panic("Already voted this period")
 			}
 		}
@@ -84,19 +84,21 @@ func validate(stateDao domain.StateDAO, vote Vote){
 	}
 }
 
-func addBallotDecisionsToVoter(stateDao domain.StateDAO, ballot domain.Ballot, voter domain.Voter, save bool)([]domain.Decision){
-	var result []domain.Decision
+func alreadyVoted(voter domain.Voter, decision domain.Decision)(bool){
+	return (voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-decision.VoteDelayMS)))
+}
+
+func addBallotDecisionsToVoter(stateDao domain.StateDAO, ballot domain.Ballot, voter *domain.Voter, save bool){
 	for _, decisionId := range ballot.Decisions {
 		decision := stateDao.GetDecision(decisionId)
 		addDecisionToVoter(voter, decision)
 	}
 	if(save) {
-		stateDao.SaveVoter(voter)
+		stateDao.SaveVoter(*voter)
 	}
-	return result
 }
 
-func addDecisionToVoter(voter domain.Voter, decision domain.Decision){
+func addDecisionToVoter(voter *domain.Voter, decision domain.Decision){
 	if _, exists := voter.DecisionIdToVoteCount[decision.Id]; exists {
 		//already allocated for this, skip
 	}else{
@@ -240,11 +242,18 @@ func allocateVotesToVoter(stateDao domain.StateDAO, voter domain.Voter)([]domain
 	var result = make([]domain.Decision, 0)
 	for ballotId := range accountBallots.PublicBallotIds {
 		ballot := stateDao.GetBallot(ballotId)
-		addBallotDecisionsToVoter(stateDao, ballot, voter, false)
+		log("ballot:")
+		printJson(ballot)
+		addBallotDecisionsToVoter(stateDao, ballot, &voter, false)
 	}
 	stateDao.SaveVoter(voter)
 	//TODO: allocate private ballots if criteira is met
 	return result
+}
+
+func printJson(value interface{}){
+	result, _:=  json.Marshal(value)
+	log(string(result))
 }
 
 func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error){
@@ -283,9 +292,11 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_VOTER)) {
 			var voter domain.Voter
 			parseArg(args[0], &voter)
+			printJson(voter)
 			voter = lazyInitVoter(stateDao, voter)
-			decisions := allocateVotesToVoter(stateDao, voter)
-			result, err = json.Marshal(decisions)
+			printJson(voter)
+			allocateVotesToVoter(stateDao, voter)
+			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
@@ -297,6 +308,19 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		err = errors.New("Invalid Function: "+function)
 	}
 	return result, err
+}
+
+func getActiveDecisions(stateDao domain.StateDAO, voter domain.Voter)([]domain.Decision){
+	result := make([]domain.Decision, 0)
+	for k,_ := range voter.DecisionIdToVoteCount{
+		if(voter.DecisionIdToVoteCount[k] > 0){
+			decision := stateDao.GetDecision(k)
+			if(!decision.Repeatable || !alreadyVoted(voter, decision)){
+				result = append(result, decision)
+			}
+		}
+	}
+	return result
 }
 
 func handleQuery(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error) {
@@ -319,13 +343,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			var voter_obj domain.Voter
 			parseArg(args[0], &voter_obj)
 			voter := stateDao.GetVoter(voter_obj.Id)
-			ballot := make([]domain.Decision, 0)
-			for k := range voter.DecisionIdToVoteCount {
-				if (voter.DecisionIdToVoteCount[k] > 0) {
-					ballot = append(ballot, stateDao.GetDecision(k))
-				}
-			}
-			result, err = json.Marshal(ballot)
+			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
 	}
 	return
