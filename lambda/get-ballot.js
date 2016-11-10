@@ -23,9 +23,15 @@ var postRequest = function(urlPath, postData, callback, errorCallback){
     };
 
     var req = http.request(options, function(res){
+        var body = '';
         res.setEncoding('utf8');
+
+        res.on('data', function (chunk) {
+            body += chunk;
+        });
+
         res.on('end', function(){
-            callback();
+            callback(JSON.parse(body));
         });
     });
 
@@ -59,6 +65,11 @@ var getBallot = function(enrollmentId, voterId, callback, errorCallback){
 };
 
 var invokeChaincode = function(operation, payload, secureContext, callback, errorCallback){
+
+    var timeMs = new Date().getTime();
+    var randomNumber = Math.floor(Math.random()*100000);
+    var correlationId = parseInt(""+timeMs+randomNumber);
+
     var postData = JSON.stringify({
         "jsonrpc": "2.0",
         "method":"invoke",
@@ -72,7 +83,7 @@ var invokeChaincode = function(operation, payload, secureContext, callback, erro
             "attributes": ["role","account_id"],
             "secureContext": secureContext
         },
-        "id": 2
+        "id": correlationId
     });
 
     postRequest("/chaincode", postData, callback, errorCallback);
