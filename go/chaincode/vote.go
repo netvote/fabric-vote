@@ -292,9 +292,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_VOTER)) {
 			var voter domain.Voter
 			parseArg(args[0], &voter)
-			printJson(voter)
 			voter = lazyInitVoter(stateDao, voter)
-			printJson(voter)
 			allocateVotesToVoter(stateDao, voter)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
