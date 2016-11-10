@@ -68,7 +68,7 @@ var invokeChaincode = function(operation, payload, secureContext, callback, erro
 
     var timeMs = new Date().getTime();
     var randomNumber = Math.floor(Math.random()*100000);
-    var correlationId = parseInt(""+timeMs+randomNumber);
+    var correlationId = parseInt(""+timeMs+""+randomNumber);
 
     var postData = JSON.stringify({
         "jsonrpc": "2.0",
