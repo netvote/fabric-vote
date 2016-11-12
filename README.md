@@ -14,7 +14,7 @@ This contains blockchian transactions for creating decisions, voters, and castin
 - `add_voter`: (admin) creates a voter on blockchain and allocates votes *may not be needed*
 
 #### Voter Invoke Transactions
-- `allocate_ballot_votes`: (voter) creates a voter and allocates votes for given ballot ID 
+- `init_voter`: (voter) lazy-creates a voter and allocates votes for all 'public ballots' in same account
 - `cast_votes`: (voter) spends votes on decisions, which updates results, removes votes from voter
 
 #### Query Transactions
