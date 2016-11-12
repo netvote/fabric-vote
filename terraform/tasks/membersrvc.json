@@ -1,0 +1,16 @@
+[
+  {
+    "name": "member-service",
+    "image": "hyperledger/fabric-membersrvc",
+    "cpu": 10,
+    "memory": 512,
+    "essential": true,
+    "command": ["membersrvc"],
+    "portMappings": [
+      {
+        "containerPort": 7054,
+        "hostPort": 7054
+      }
+    ]
+  }
+]
