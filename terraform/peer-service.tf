@@ -2,6 +2,11 @@
 resource "aws_ecs_task_definition" "peer" {
   family = "peer"
   container_definitions = "${file("tasks/peer.json")}"
+
+  volume {
+    name = "dockersock"
+    host_path = "/var/run/docker.sock"
+  }
 }
 
 resource "aws_ecs_service" "peer" {
@@ -10,7 +15,7 @@ resource "aws_ecs_service" "peer" {
   task_definition = "${aws_ecs_task_definition.peer.arn}"
   desired_count = 1
   iam_role = "${aws_iam_role.ecs_instance_role.arn}"
-
+  depends_on = ["aws_iam_role.ecs_instance_role"]
   load_balancer {
     elb_name = "${aws_elb.peer.name}"
     container_name = "peer"
@@ -60,7 +65,7 @@ resource "aws_elb" "peer" {
 
   health_check {
     healthy_threshold = 2
-    unhealthy_threshold = 10
+    unhealthy_threshold = 3
     timeout = 20
     target = "TCP:7050"
     interval = 30

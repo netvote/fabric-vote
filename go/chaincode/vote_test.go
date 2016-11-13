@@ -25,16 +25,20 @@ func resetTime(){
 	os.Unsetenv("TEST_TIME")
 }
 
-func checkInit(t *testing.T, stub *shim.MockStub, args []string) {
-	_, err := stub.MockInit("1", "init", args)
-	if err != nil {
-		fmt.Println("Init failed", err)
-		t.FailNow()
+func to_byte_array(function string, args []string)([][]byte){
+	result := [][]byte{}
+
+	result = append(result, []byte(function))
+
+	for _,it := range args {
+		result = append(result, []byte(it))
 	}
+	return result
 }
 
 func checkInvokeWithResponse(t *testing.T, stub *shim.MockStub, function string, txId string, args []string, value string) {
-	bytes, err := stub.MockInvoke(txId, function, args)
+	b_args := to_byte_array(function, args)
+	bytes, err := stub.MockInvoke(txId, b_args)
 	if err != nil {
 		fmt.Println("Invoke", args, "failed", err)
 		t.FailNow()
@@ -51,7 +55,7 @@ func checkInvokeWithResponse(t *testing.T, stub *shim.MockStub, function string,
 }
 
 func checkInvoke(t *testing.T, stub *shim.MockStub, function string, args []string) {
-	_, err := stub.MockInvoke("1", function, args)
+	_, err := stub.MockInvoke("1", to_byte_array(function, args))
 	if err != nil {
 		fmt.Println("Invoke", args, "failed", err)
 		t.FailNow()
@@ -59,7 +63,7 @@ func checkInvoke(t *testing.T, stub *shim.MockStub, function string, args []stri
 }
 
 func checkInvokeError(t *testing.T, stub *shim.MockStub, function string, args []string, error string) {
-	_, err := stub.MockInvoke("1", function, args)
+	_, err := stub.MockInvoke("1", to_byte_array(function, args))
 	if err == nil {
 		fmt.Println("No error was found, but error was expected: "+error)
 		t.FailNow()
@@ -92,7 +96,7 @@ func checkState(t *testing.T, stub *shim.MockStub, name string, value string) {
 }
 
 func checkQuery(t *testing.T, stub *shim.MockStub, function string, args []string, value string) {
-	bytes, err := stub.MockQuery(function, args)
+	bytes, err := stub.MockQuery(to_byte_array(function, args))
 	if err != nil {
 		fmt.Println("Query", args, "failed", err)
 		t.FailNow()

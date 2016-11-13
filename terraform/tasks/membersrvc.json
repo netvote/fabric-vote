@@ -6,6 +6,12 @@
     "memory": 512,
     "essential": true,
     "command": ["membersrvc"],
+    "mountPoints": [
+      {
+        "containerPath": "/opt/gopath/src/github.com/hyperledger/fabric/membersrvc/membersrvc.yaml",
+        "sourceVolume": "memberservceconfig"
+      }
+    ],
     "portMappings": [
       {
         "containerPort": 7054,

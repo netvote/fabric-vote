@@ -2,6 +2,11 @@
 resource "aws_ecs_task_definition" "memberservice" {
   family = "member-service"
   container_definitions = "${file("tasks/membersrvc.json")}"
+
+  volume {
+    name = "memberservceconfig"
+    host_path = "/home/ec2-user/boxconfig/membersrvc.yaml"
+  }
 }
 
 resource "aws_ecs_service" "memberservice" {
@@ -10,7 +15,7 @@ resource "aws_ecs_service" "memberservice" {
   task_definition = "${aws_ecs_task_definition.memberservice.arn}"
   desired_count = 1
   iam_role = "${aws_iam_role.ecs_instance_role.arn}"
-
+  depends_on = ["aws_iam_role.ecs_instance_role"]
   load_balancer {
     elb_name = "${aws_elb.memberservice.name}"
     container_name = "member-service"
@@ -39,7 +44,7 @@ resource "aws_elb" "memberservice" {
 
   health_check {
     healthy_threshold = 2
-    unhealthy_threshold = 10
+    unhealthy_threshold = 3
     timeout = 20
     target = "TCP:7054"
     interval = 30

@@ -7,14 +7,20 @@
     "essential": true,
     "environment" : [
       { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "true" },
-      { "name" : "CORE_VM_ENDPOINT", "value" : "http://172.17.0.1:2375" },
+      { "name" : "CORE_VM_ENDPOINT", "value" : "unix:///tmp/docker.sock" },
       { "name" : "CORE_LOGGING_LEVEL", "value" : "DEBUG" },
       { "name" : "CORE_PEER_ID", "value" : "vp0" },
       { "name" : "CORE_SECURITY_ENABLED", "value" : "true" },
-      { "name" : "CORE_PEER_PKI_ECA_PADDR", "value" : "member.stevenlanders.net:7054" },
-      { "name" : "CORE_PEER_PKI_TCA_PADDR", "value" : "member.stevenlanders.net:7054" },
-      { "name" : "CORE_PEER_PKI_TLSCA_PADDR", "value" : "member.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_PKI_ECA_PADDR", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_PKI_TCA_PADDR", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_PKI_TLSCA_PADDR", "value" : "members.stevenlanders.net:7054" },
       { "name" : "CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN", "value" : "noops" }
+    ],
+    "mountPoints": [
+      {
+        "containerPath": "/tmp/docker.sock",
+        "sourceVolume": "dockersock"
+      }
     ],
     "command": ["peer","node","start"],
     "portMappings": [

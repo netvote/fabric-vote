@@ -33,10 +33,9 @@ chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
     // registrationRequest
     var registrationRequest = {
         enrollmentID: userName,
-        affiliation: "company_a",
+        affiliation: "netvote",
         attributes: [
-	    { name: "account_id", value: "acct-id" },
-            { name: "voter_id", value: userName },
+	        { name: "account_id", value: "acct-id" },
             { name: "role", value: role}
         ]
     };

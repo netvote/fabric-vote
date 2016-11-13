@@ -6,6 +6,17 @@ resource "aws_instance" "ecs-cluster" {
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.id}"
   key_name = "netvote-slanders"
   user_data = "${replace(file("conf/userdata-ecs-cluster.txt"), "CLUSTER_NAME", aws_ecs_cluster.netvote.name)}"
+
+  provisioner "file" {
+    source = "conf/boxconfig"
+    destination = "/home/ec2-user"
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("/Users/slanders/.ssh/netvote-slanders.pem")}"
+    }
+  }
+
 }
 
 # ECS RESOURCES

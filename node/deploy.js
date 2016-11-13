@@ -2,23 +2,6 @@
  * This code is all over the place - and is mostly a scratch spce to get things working
  */
 
-var BALLOT = {
-    "Name": "Test Election",
-    "Decisions": [
-        {
-            Id: "us-president-2016",
-            Name: "President of the United States",
-            Options: ["Taft", "Bryan"]
-        },
-        {
-            Id: "ga-governor-2016",
-            Name: "President of the United States",
-            Options: ["John", "Sarah"]
-        }
-    ]
-}
-
-
 var hfc = require("hfc");
 
 console.log(" **** starting NetVote ****");
@@ -75,13 +58,16 @@ function deploy(user) {
     console.log("deploying chaincode; please wait ...");
     // Construct the deploy request
     var deployRequest = {
-        chaincodeName: process.env.CORE_CHAINCODE_ID_NAME,
+        chaincodeName: "netvote",
+        chaincodePath: "netvote/go/chaincode/",
         fcn: "init",
         args: []
     };
 
     var tx = user.deploy(deployRequest);
     tx.on('complete', function(results) {
+	console.log(results);
+	console.log(JSON.stringify(results));
     });
     tx.on('error', function(error) {
         console.log("Failed to deploy chaincode: request=%j, error=%k",deployRequest,error);
