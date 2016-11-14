@@ -1,0 +1,23 @@
+[
+  {
+    "DecisionId": "ga-governor-20162",
+    "Selections": {
+      "John":1
+    }
+  },  {
+    "DecisionId": "iraq-president-2016",
+    "Selections": {
+      "Taft":1
+    }
+  },  {
+    "DecisionId": "mn-governor-2016",
+    "Selections": {
+      "John":1
+    }
+  },  {
+    "DecisionId": "us-president-20162",
+    "Selections": {
+      "Bryan":1
+    }
+  }  
+] 
