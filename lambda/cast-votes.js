@@ -5,11 +5,6 @@ var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 var http = require('http');
 
-var enrollMock = function(enrollmentId, enrollmentSecret, callback, errorCallback){
-    console.log('enroll mock:'+enrollmentId+"/"+enrollmentSecret);
-    callback();
-};
-
 var postRequest = function(urlPath, postData, callback, errorCallback){
     var options = {
         hostname: 'peer.stevenlanders.net',
@@ -53,17 +48,9 @@ var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
     postRequest("/registrar", postData, callback, errorCallback);
 };
 
-var getBallotMock = function(enrollmentId, voterId, callback, errorCallback){
-    console.log('getBallot mock: context='+enrollmentId+", voter="+voterId);
-    var mockObj = [{"Id":"1912-us-president","Name":"president","BallotId":"","Options":["Taft","Bryan"],"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false},
-        {"Id":"1912-ga-governor","Name":"governor","BallotId":"","Options":["Mark","Sarah"],"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}];
-    callback(mockObj);
-};
 
-var getBallot = function(enrollmentId, voterId, callback, errorCallback){
-    invokeChaincode("invoke", "init_voter", {Id: voterId}, enrollmentId, function(){
-        invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, callback, errorCallback);
-    }, errorCallback);
+var castVotes = function(enrollmentId, votes, callback, errorCallback){
+    invokeChaincode("invoke", "cast_votes", votes, enrollmentId, callback, errorCallback);
 };
 
 var invokeChaincode = function(method, operation, payload, secureContext, callback, errorCallback){
@@ -126,18 +113,20 @@ exports.handler = function(event, context, callback){
             var enrollmentSecret = data.Item.enrollment_secret;
             var voterId = event.pathParameters.voterid;
 
+            var votes = JSON.parse(event.body);
+
             enroll(enrollmentId, enrollmentSecret, function(){
                 console.log("enroll success");
-                getBallot(enrollmentId, voterId, function(ballot){
-                    console.log("getBallot success: "+JSON.stringify(ballot));
+                castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function(result){
+                    console.log("castVote success: "+JSON.stringify(result));
 
                     respObj = {
                         "statusCode": 200,
                         "headers": {},
-                        "body": ballot.result.message
+                        "body": "success"
                     };
 
-                    console.log("ballot success: "+ballot.result.message);
+                    console.log("cast vote success");
 
                     callback(null, respObj);
                 }, function(e){
