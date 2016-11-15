@@ -1,0 +1,29 @@
+[
+  {
+    "name": "chain-api",
+    "image": "845215180986.dkr.ecr.us-east-1.amazonaws.com/netvote/chain-api",
+    "cpu": 10,
+    "memory": 512,
+    "essential": true,
+    "environment" : [
+      { "name" : "MEMBERSRVC_ADDRESS", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "KEY_VALUE_STORE", "value" : "/tmp/hl_sdk_node_key_value_store" },
+      { "name" : "CORE_PEER_ADDRESS", "value" : "peer.stevenlanders.net:7051" },
+      { "name" : "PEER_ADDRESS", "value" : "peer.stevenlanders.net:7051" },
+      { "name" : "CORE_CHAINCODE_ID_NAME", "value" : "netvote" }
+    ],
+    "command": ["node","app"],
+    "mountPoints": [
+      {
+        "containerPath": "/tmp/keyValStore",
+        "sourceVolume": "chaincerts"
+      }
+    ],
+    "portMappings": [
+      {
+        "containerPort": 8000,
+        "hostPort": 8000
+      }
+    ]
+  }
+]

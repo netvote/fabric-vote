@@ -17,6 +17,16 @@ resource "aws_instance" "ecs-cluster" {
     }
   }
 
+  provisioner "file" {
+    source = "conf/keys"
+    destination = "/home/ec2-user"
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("/Users/slanders/.ssh/netvote-slanders.pem")}"
+    }
+  }
+
 }
 
 # ECS RESOURCES

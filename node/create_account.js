@@ -1,13 +1,8 @@
-//TODO: figure out how this should be invoked.  It needs to be somewhere close to chaincode
-
 var hfc = require("hfc");
+var express = require('express');
 var uuid = require('node-uuid');
-var AWS = require('aws-sdk');
+var app = express();
 
-
-console.log(" **** registering account  ****");
-
-// get the addresses from the docker-compose environment
 var MEMBERSRVC_ADDRESS   = process.env.MEMBERSRVC_ADDRESS;
 var chain;
 chain = hfc.newChain("voter-client");
@@ -15,12 +10,11 @@ chain.setKeyValStore( hfc.newFileKeyValStore('/tmp/keyValStore') );
 console.log("member services address ="+MEMBERSRVC_ADDRESS);
 chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
 
-
 var registerUser = function(accountId, role, callback){
-    var enrollmentId = role+"-"+accountId;
+    var enrollmentId = role+"_"+accountId;
     var registrationRequest = {
         enrollmentID: enrollmentId,
-        affiliation: "bank_a",
+        affiliation: "netvote",
         attributes: [
             { name: "account_id", value: accountId },
             { name: "role", value: role}
@@ -34,56 +28,39 @@ var registerUser = function(accountId, role, callback){
     });
 };
 
-var provisionAPI = function(accountId, enrollmentId, secret){
-    var apigateway = new AWS.APIGateway();
-    var params = {
-        description: 'api key for '+enrollmentId,
-        enabled: true,
-        generateDistinctId: true,
-        name: enrollmentId
-    };
-    apigateway.createApiKey(params, function(err, data) {
-        if (err){
-            console.log(err, err.stack)
+
+app.get('/', function (req, res) {
+
+    chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
+        if (err) {
+            console.log("ERROR: failed to register admin: %s", err);
+            process.exit(1);
         }
-        else{
-            console.log(data);
-            //TODO: good way to get usage plan id?
-            var params = {
-                keyId: key.id, /* required */
-                keyType: 'API_KEY', /* required */
-                usagePlanId: "458o87" /* required */
-            };
-            apigateway.createUsagePlanKey(params, function(err, data) {
-                if (err) console.log(err, err.stack); // an error occurred
-                else     console.log(data);           // successful response
+        // Set this user as the chain's registrar which is authorized to register other users.
+        chain.setRegistrar(admin);
+
+        var accountId = uuid.v4().replace(/-/g, "_");
+
+        result = {};
+
+        registerUser(accountId, "voter", function (voterEnrollId, voterSecret) {
+            registerUser(accountId, "admin", function (adminEnrollId, adminSecret) {
+                result = {
+                    "voter": {
+                        "enrollId": voterEnrollId,
+                        "secret": voterSecret
+                    },
+                    "admin": {
+                        "enrollId": adminEnrollId,
+                        "secret": adminSecret
+                    }
+                };
+                res.json(result);
             });
-        }           // successful response
-    });
-};
-
-//TODO: see if I can avoid hardcoding this password
-chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
-    if (err) {
-        console.log("ERROR: failed to register admin: %s",err);
-        process.exit(1);
-    }
-    // Set this user as the chain's registrar which is authorized to register other users.
-    chain.setRegistrar(admin);
-
-    var accountId = uuid.v1();
-
-    registerUser(accountId, "voter", function(enrollmentId, secret){
-
-        //TODO: store dynamoDB entry
-
-        provisionAPI(accountId, enrollmentId, secret);
-
-        registerUser(accountId, "admin", function(enrollmentId, secret){
-            //do nothing for now
-            console.log("Complete");
-        })
-    });
-
+        });
+    })
 });
 
+app.listen(8000, function () {
+    console.log('Started server on port 8000')
+});
