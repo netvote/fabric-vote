@@ -42,7 +42,7 @@ enroll();
 function enroll() {
     console.log("enrolling user admin ...");
     // Enroll "admin" which is preregistered in the membersrvc.yaml
-    chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
+    chain.enroll("deployer", "n3tvotedeploy", function(err, admin) {
         if (err) {
             console.log("ERROR: failed to register admin: %s",err);
             process.exit(1);

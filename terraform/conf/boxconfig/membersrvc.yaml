@@ -88,6 +88,8 @@ eca:
                 #    The 'WebAppAdmin' user below can register clients only, but none of the users registered by this user can register other users.
                 #
                 admin: 1 Xurw3yU9zI0l netvote '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
+                deployer: 1 n3tvotedeploy netvote '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
+
                 vp: 4 f3489fy98ghf
 
                 test_vp0: 4 MwYpmSRjupbT

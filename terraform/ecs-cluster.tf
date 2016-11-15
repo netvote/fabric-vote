@@ -1,12 +1,14 @@
 # ECS RESOURCES
 resource "aws_instance" "ecs-cluster" {
   ami = "ami-46134b51"
-  instance_type = "m3.large"
-  count = 1
+  instance_type = "m3.medium"
+  count = 4
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.id}"
   key_name = "netvote-slanders"
   user_data = "${replace(file("conf/userdata-ecs-cluster.txt"), "CLUSTER_NAME", aws_ecs_cluster.netvote.name)}"
-
+  tags {
+    Name = "vote-cluster-node-${count.index}"
+  }
   provisioner "file" {
     source = "conf/boxconfig"
     destination = "/home/ec2-user"
@@ -26,7 +28,6 @@ resource "aws_instance" "ecs-cluster" {
       private_key = "${file("/Users/slanders/.ssh/netvote-slanders.pem")}"
     }
   }
-
 }
 
 # ECS RESOURCES

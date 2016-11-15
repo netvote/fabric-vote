@@ -1,0 +1,47 @@
+[
+  {
+    "name": "rootpeer",
+    "image": "hyperledger/fabric-peer",
+    "cpu": 10,
+    "memory": 512,
+    "essential": true,
+    "environment" : [
+      { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "true" },
+      { "name" : "CORE_VM_ENDPOINT", "value" : "unix:///tmp/docker.sock" },
+      { "name" : "CORE_LOGGING_LEVEL", "value" : "DEBUG" },
+      { "name" : "CORE_PEER_ID", "value" : "vp0" },
+      { "name" : "CORE_SECURITY_ENABLED", "value" : "false" },
+      { "name" : "CORE_PEER_PKI_ECA_PADDR", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_PKI_TCA_PADDR", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_PKI_TLSCA_PADDR", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN", "value" : "pbft" },
+      { "name" : "CORE_PBFT_GENERAL_TIMEOUT_REQUEST", "value" : "10s"},
+      { "name" : "CORE_PBFT_GENERAL_N", "value": "4"}
+    ],
+    "mountPoints": [
+      {
+        "containerPath": "/tmp/docker.sock",
+        "sourceVolume": "dockersock"
+      }
+    ],
+    "command": ["peer","node","start"],
+    "portMappings": [
+      {
+        "containerPort": 7050,
+        "hostPort": 7050
+      },
+      {
+        "containerPort": 7051,
+        "hostPort": 9051
+      },
+      {
+        "containerPort": 7052,
+        "hostPort": 9052
+      },
+      {
+        "containerPort": 2375,
+        "hostPort": 9375
+      }
+    ]
+  }
+]
