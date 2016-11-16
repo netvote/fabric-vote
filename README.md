@@ -6,7 +6,8 @@ This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readt
 #### Get Ballot for Voter
 
 `GET /ballot/{voter-id}`
-Returns the list of decisions this voter is eligable to make
+
+Returns the list of decisions this voter is eligible to make.  These might be across ballots within an account.  A UX can decide whether these are in different views.  (e.g., voting for favorite cake and voting for company board might not be on same page)
 
 Response:
 ```
