@@ -13,6 +13,7 @@ Response:
 ```
 [{
    "Id": "favorite-color",
+   "Name": "What is your favorite color?",
    "BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
    "Options": [
       "red",
@@ -25,6 +26,7 @@ Response:
 },
 {
    "Id": "favorite-beer",
+   "Name": "What is your favorite beer?",
    "BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
    "Options": [
       "ipa",
@@ -39,6 +41,7 @@ Response:
 ```
 ##### Fields
 - **Id**: Unique identifier for this decision
+- **Name**: Displayable name for this decision
 - **BallotId**: Which ballot this decision was created for
 - **Options**: List of selections
 - **Repeatable**: Whether a user can vote more than once
