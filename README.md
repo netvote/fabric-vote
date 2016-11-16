@@ -46,7 +46,7 @@ Response:
 - **Options**: List of selections
 - **Repeatable**: Whether a user can vote more than once
 - **RepeatVoteDelayNS**: Wait period before a repeat-vote is allowed
-- **ResponsesRequired**: Number of selections a user must make (e.g., pick 1, 2, etc)
+- **ResponsesRequired**: Number of vote units that must be spent in a decision.
 
 #### Cast Vote
 
