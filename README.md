@@ -2,9 +2,73 @@
 
 This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readthedocs.io/en/latest/starter/fabric-starter-kit/#fabric-starter-kit).  
 
-The project consists of three components:
+### Voter APIs
+#### Get Ballot for Voter
 
-### chaincode (golang):  
+`GET /ballot/{voter-id}`
+Returns the list of decisions this voter is eligable to make
+
+Response:
+```
+[{
+   "Id": "favorite-color",
+   "BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
+   "Options": [
+      "red",
+      "blue",
+      "green"
+   ],
+   "Repeatable": false,
+   "RepeatVoteDelayNS": 0,
+   "ResponsesRequired": 1
+},
+{
+   "Id": "favorite-beer",
+   "BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
+   "Options": [
+      "ipa",
+      "amber ale",
+      "pilsner",
+      "stout"
+   ],
+   "Repeatable": false,
+   "RepeatVoteDelayNS": 0,
+   "ResponsesRequired": 1
+}]
+```
+##### Fields
+- **Id**: Unique identifier for this decision
+- **BallotId**: Which ballot this decision was created for
+- **Options**: List of selections
+- **Repeatable**: Whether a user can vote more than once
+- **RepeatVoteDelayNS**: Wait period before a repeat-vote is allowed
+- **ResponsesRequired**: Number of selections a user must make (e.g., pick 1, 2, etc)
+
+#### Cast Vote
+
+`POST /vote/{voter-id}`
+Casts a vote for a voter
+
+Payload:
+```
+[{
+   "DecisionId": "favorite-color",
+   "Selections": {
+     "red": 1
+   }
+ },
+ {
+   "DecisionId": "favorite-beer",
+   "Selections": {
+     "ipa": 1
+   }
+}]
+```
+##### Fields
+- **DecisionId**: Unique identifier for this decision
+- **Selections**: Map of selection to number of votes to allocate (must add up to ResponsesRequired)
+
+### Chaincode (golang):  
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
