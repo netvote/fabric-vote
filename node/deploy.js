@@ -21,17 +21,16 @@ chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
 chain.addPeer("grpc://"+PEER_ADDRESS);
 
 var mode =  process.env['DEPLOY_MODE'];
-console.log("DEPLOY_MODE=" + mode);
+var deploy_user =  process.env['DEPLOY_USER'];
+var deploy_pass =  process.env['DEPLOY_PASS'];
+
 if (mode === 'dev') {
     chain.setDevMode(true);
-    //Deploy will not take long as the chain should already be running
     chain.setDeployWaitTime(10);
 } else {
     chain.setDevMode(false);
-    //Deploy will take much longer in network mode
     chain.setDeployWaitTime(120);
 }
-
 
 chain.setInvokeWaitTime(10);
 
@@ -42,7 +41,7 @@ enroll();
 function enroll() {
     console.log("enrolling user admin ...");
     // Enroll "admin" which is preregistered in the membersrvc.yaml
-    chain.enroll("deployer", "n3tvotedeploy", function(err, admin) {
+    chain.enroll(deploy_user, deploy_pass, function(err, admin) {
         if (err) {
             console.log("ERROR: failed to register admin: %s",err);
             process.exit(1);

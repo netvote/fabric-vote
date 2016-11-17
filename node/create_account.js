@@ -10,6 +10,10 @@ chain.setKeyValStore( hfc.newFileKeyValStore('/tmp/keyValStore') );
 console.log("member services address ="+MEMBERSRVC_ADDRESS);
 chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
 
+
+var admin_user =  process.env['ADMIN_USER'];
+var admin_pass =  process.env['ADMIN_PASS'];
+
 var registerUser = function(accountId, role, callback){
     var enrollmentId = role+"_"+accountId;
     var registrationRequest = {
@@ -31,7 +35,7 @@ var registerUser = function(accountId, role, callback){
 
 app.get('/', function (req, res) {
 
-    chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
+    chain.enroll(admin_user, admin_pass, function(err, admin) {
         if (err) {
             console.log("ERROR: failed to register admin: %s", err);
             process.exit(1);
@@ -63,4 +67,8 @@ app.get('/', function (req, res) {
 
 app.listen(8000, function () {
     console.log('Started server on port 8000')
+});
+
+process.on('uncaughtException', function (err) {
+    console.log(err);
 });

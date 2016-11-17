@@ -15,7 +15,7 @@ resource "aws_ecs_service" "chainapi" {
   task_definition = "${aws_ecs_task_definition.chainapi.arn}"
   desired_count = 1
   iam_role = "${aws_iam_role.ecs_instance_role.arn}"
-  depends_on = ["aws_iam_role.ecs_instance_role"]
+  depends_on = ["aws_iam_role.ecs_instance_role", "aws_ecs_service.rootpeer"]
   load_balancer {
     elb_name = "${aws_elb.chainapi.name}"
     container_name = "chain-api"

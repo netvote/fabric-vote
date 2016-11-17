@@ -1,6 +1,6 @@
 [
   {
-    "name": "chain-api",
+    "name": "deployer",
     "image": "845215180986.dkr.ecr.us-east-1.amazonaws.com/netvote/chain-api",
     "cpu": 10,
     "memory": 512,
@@ -11,20 +11,14 @@
       { "name" : "CORE_PEER_ADDRESS", "value" : "peer.stevenlanders.net:7051" },
       { "name" : "PEER_ADDRESS", "value" : "peer.stevenlanders.net:7051" },
       { "name" : "CORE_CHAINCODE_ID_NAME", "value" : "netvote" },
-      { "name" : "ADMIN_USER", "value" : "admin" },
-      { "name" : "ADMIN_PASS", "value" : "netvoteadmin" }
+      { "name" : "DEPLOY_USER", "value" : "deployer" },
+      { "name" : "DEPLOY_PASS", "value" : "netvotedeployer" }
     ],
-    "command": ["sh", "-c", "node app"],
+    "command": ["sh", "-c", "node deploy && tail -f /var/log/bootstrap.log"],
     "mountPoints": [
       {
         "containerPath": "/tmp/keyValStore",
         "sourceVolume": "chaincerts"
-      }
-    ],
-    "portMappings": [
-      {
-        "containerPort": 8000,
-        "hostPort": 8000
       }
     ]
   }

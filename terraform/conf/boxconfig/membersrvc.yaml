@@ -87,21 +87,13 @@ eca:
                 # Example2:
                 #    The 'WebAppAdmin' user below can register clients only, but none of the users registered by this user can register other users.
                 #
-                admin: 1 Xurw3yU9zI0l netvote '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
-                deployer: 1 n3tvotedeploy netvote '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
-
+                admin: 1 netvoteadmin netvote '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
+                deployer: 1 netvotedeployer netvote
                 vp: 4 f3489fy98ghf
-
-                test_vp0: 4 MwYpmSRjupbT
-                test_vp1: 4 5wgHK9qqYaPy
-                test_vp2: 4 vQelbRvja7cJ
-                test_vp3: 4 9LKqKH5peurL
-                test_vp4: 4 Pqh90CEW5juZ
-                test_vp5: 4 FfdvDkAdY81P
-                test_vp6: 4 QiXJgHyV4t7A
-                test_vp7: 4 twoKZouEyLyB
-                test_vp8: 4 BxP7QNh778gI
-                test_vp9: 4 wu3F1EwJWHvQ
+                vp1: 4 netvotepeer
+                vp2: 4 netvotepeer
+                vp3: 4 netvotepeer
+                vp4: 4 netvotepeer
 
 tca:
           # Enabling/disabling attributes encryption, currently false is unique possible value due attributes encryption is not yet implemented.
