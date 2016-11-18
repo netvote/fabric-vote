@@ -9,6 +9,10 @@ This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readt
 
 Creates a set of decisions.  A ballot is just a payload of decisions with some metadata around privacy.
 
+This ballot includes two decisions. 
+1. Favorite Color:  1-time vote between Red/BlueGreen
+2. Favorte Beer: A user may vote once per day and must choose two favorite beers each time.
+
 Payload:
 ```
 {
@@ -36,7 +40,7 @@ Payload:
 - **Decision.Id**: Key for this decision (must be unique)
 - **Decision.Name**: Displayable name for this decision
 - **Decision.Options**: List of options for this decision
-- **Decision.RepeatVoteDelayNS**: Wait period before a repeat-vote is allowed
+- **Decision.RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
 - **Decision.ResponsesRequired**: Number of vote units that must be spent in a decision.
 
 #### Get Results 
@@ -107,7 +111,7 @@ Response:
 - **BallotId**: Which ballot this decision was created for
 - **Options**: List of selections
 - **Repeatable**: Whether a user can vote more than once
-- **RepeatVoteDelayNS**: Wait period before a repeat-vote is allowed
+- **RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
 - **ResponsesRequired**: Number of vote units that must be spent in a decision.
 
 #### Cast Vote
