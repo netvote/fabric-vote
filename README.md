@@ -9,7 +9,8 @@ This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readt
 
 Creates a set of decisions.  A ballot is just a payload of decisions with some metadata around privacy.
 
-This ballot includes two decisions. 
+This example ballot includes two decisions. 
+
 1. Favorite Color:  1-time vote between Red/BlueGreen
 2. Favorte Beer: A user may vote once per day and must choose two favorite beers each time.
 
