@@ -9,11 +9,6 @@ var getChaincodeId = function(){
     return CHAINCODE_ID;
 };
 
-var enrollMock = function(enrollmentId, enrollmentSecret, callback, errorCallback){
-    console.log('enroll mock:'+enrollmentId+"/"+enrollmentSecret);
-    callback();
-};
-
 var postRequest = function(urlPath, postData, callback, errorCallback){
     var options = {
         hostname: 'peer.stevenlanders.net',
@@ -59,23 +54,9 @@ var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
     postRequest("/registrar", postData, callback, errorCallback);
 };
 
-var getBallotMock = function(enrollmentId, voterId, callback, errorCallback){
-    console.log('getBallot mock: context='+enrollmentId+", voter="+voterId);
-    var mockObj = [{"Id":"1912-us-president","Name":"president","BallotId":"","Options":["Taft","Bryan"],"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false},
-        {"Id":"1912-ga-governor","Name":"governor","BallotId":"","Options":["Mark","Sarah"],"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}];
-    callback(mockObj);
-};
 
-var getBallot = function(enrollmentId, voterId, callback, errorCallback){
-    invokeChaincode("invoke", "init_voter", {Id: voterId}, enrollmentId, function(){
-        setTimeout(function() {
-            invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, function(ballot){
-                setTimeout(function() {
-                    invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, callback, errorCallback);
-                }, 500);
-            }, errorCallback);
-        }, 500);
-    }, errorCallback);
+var getResults = function(enrollmentId, decisionId, callback, errorCallback){
+    invokeChaincode("query", "get_results", {Id: decisionId}, enrollmentId, callback, errorCallback);
 };
 
 var invokeChaincode = function(method, operation, payload, secureContext, callback, errorCallback){
@@ -136,20 +117,18 @@ exports.handler = function(event, context, callback){
 
             var enrollmentId = data.Item.enrollment_id;
             var enrollmentSecret = data.Item.enrollment_secret;
-            var voterId = event.pathParameters.voterid;
+            var decisionId = event.pathParameters.decisionId;
 
             enroll(enrollmentId, enrollmentSecret, function(){
                 console.log("enroll success");
-                getBallot(enrollmentId, voterId, function(ballot){
-                    console.log("getBallot success: "+JSON.stringify(ballot));
+                getResults(enrollmentId, decisionId, function(results){
+                    console.log("getResults success: "+JSON.stringify(results));
 
                     respObj = {
                         "statusCode": 200,
                         "headers": {},
-                        "body": ballot.result.message
+                        "body": results.result.message
                     };
-
-                    console.log("ballot success: "+ballot.result.message);
 
                     callback(null, respObj);
                 }, function(e){

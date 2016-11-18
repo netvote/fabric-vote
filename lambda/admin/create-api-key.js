@@ -38,7 +38,6 @@ var provisionAPI = function(enrollmentId, secret, callback, errorCallback){
     });
 };
 
-
 var createAccount = function(callback, errorCallback){
     var options = {
         hostname: 'accounts.stevenlanders.net',
