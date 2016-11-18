@@ -2,6 +2,66 @@
 
 This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readthedocs.io/en/latest/starter/fabric-starter-kit/#fabric-starter-kit).  
 
+### Admin APIs
+#### Create Ballot
+
+`POST /ballot`
+
+Creates a set of decisions.  A ballot is just a payload of decisions with some metadata around privacy.
+
+Payload:
+```
+{
+   "Ballot": {
+      "Name": "Test Election",
+      "Private": false
+   },
+   "Decisions": [{
+      "Id": "favorite-color",
+      "Name": "What is your favorite color?",
+      "Options": ["Red", "Blue","Green"]
+   }, {
+      "Id": "favorite-beer",
+      "Name": "Pick your two favorite beers",
+      "Options": ["IPA", "Amber Ale","Stout","Pilsner"],
+      "ResponsesRequired": 2,
+      "Repeatable": true,
+      "RepeatVoteDelayNS": 86400000000
+   }]
+}
+````
+##### Fields
+- **Ballot.Name**: Name for ballot (not displayed today)
+- **Ballot.Private**: (default=true) If true, only assigned voters will see the decisions.  If false, any voter for this account will see these decisions.  
+- **Decision.Id**: Key for this decision (must be unique)
+- **Decision.Name**: Displayable name for this decision
+- **Decision.Options**: List of options for this decision
+- **Decision.RepeatVoteDelayNS**: Wait period before a repeat-vote is allowed
+- **Decision.ResponsesRequired**: Number of vote units that must be spent in a decision.
+
+#### Get Results 
+
+`GET /decision/{decision-id}`
+
+Gets current results for a decision
+
+Response:
+```
+{
+   "Id": "favorite-color",
+   "Results": {
+      "ALL" : {
+         "Red": 1,
+         "Blue": 2
+      }
+   }
+}
+````
+##### Fields
+- **Id**: Unique identifier for this decision
+- **Results.{key}**: Values like ALL above are a partition of voters.  By default, only ALL is a partition.  
+- **Results[key] map**: The results are in the form OPTION:SCORE
+
 ### Voter APIs
 #### Get Ballot for Voter
 

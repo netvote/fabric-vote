@@ -55,7 +55,7 @@ var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
 
 
 var createBallot = function(enrollmentId, ballot, callback, errorCallback){
-    invokeChaincode("invoke", "cast_votes", {Ballot: ballot}, enrollmentId, callback, errorCallback);
+    invokeChaincode("invoke", "cast_votes", ballot, enrollmentId, callback, errorCallback);
 };
 
 var invokeChaincode = function(method, operation, payload, secureContext, callback, errorCallback){
