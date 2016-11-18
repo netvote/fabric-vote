@@ -1,14 +1,19 @@
 'use strict';
 
+var CHAINCODE_ID = "91afb32cd2189691357b6a7d25d4edc6b15b3079b4e43be135c2cf09d13f37d8";
 console.log('Loading function');
 var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 var http = require('http');
 
+var getChaincodeId = function(){
+    return CHAINCODE_ID;
+}
+
 var postRequest = function(urlPath, postData, callback, errorCallback){
     var options = {
         hostname: 'peer.stevenlanders.net',
-        port: 7050,
+        port: 80,
         path: urlPath,
         method: 'POST',
         headers: {
@@ -64,7 +69,7 @@ var invokeChaincode = function(method, operation, payload, secureContext, callba
         "method":method,
         "params": {
             "chaincodeID": {
-                "name" :"659cb5dcc3063054e4c90908050eebf68eb2bd193cc1520f1f2d198f0ff42268"
+                "name" : getChaincodeId()
             },
             "ctorMsg": {
                 "args":[operation, JSON.stringify(payload)]
@@ -123,7 +128,7 @@ exports.handler = function(event, context, callback){
                     respObj = {
                         "statusCode": 200,
                         "headers": {},
-                        "body": "success"
+                        "body": JSON.stringify({"result":"success"})
                     };
 
                     console.log("cast vote success");
