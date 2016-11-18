@@ -68,7 +68,13 @@ var getBallotMock = function(enrollmentId, voterId, callback, errorCallback){
 
 var getBallot = function(enrollmentId, voterId, callback, errorCallback){
     invokeChaincode("invoke", "init_voter", {Id: voterId}, enrollmentId, function(){
-        invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, callback, errorCallback);
+        setTimeout(function() {
+            invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, function(ballot){
+                setTimeout(function() {
+                    invokeChaincode("query", "get_ballot", {Id: voterId}, enrollmentId, callback, errorCallback);
+                }, 500);
+            }, errorCallback);
+        }, 500);
     }, errorCallback);
 };
 
