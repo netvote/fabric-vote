@@ -6,8 +6,10 @@ var dynamo = new doc.DynamoDB();
 var http = require('http');
 var aws = require('aws-sdk');
 
+var ADMIN_USAGE_PLAN = "a2i576";
+var VOTER_USAGE_PLAN = "458o87";
 
-var provisionAPI = function(enrollmentId, secret, callback, errorCallback){
+var provisionAPI = function(enrollmentId, secret, usagePlanId, callback, errorCallback){
     var apigateway = new aws.APIGateway();
     var params = {
         description: 'api key for '+enrollmentId,
@@ -24,7 +26,7 @@ var provisionAPI = function(enrollmentId, secret, callback, errorCallback){
             var params = {
                 keyId: data.id, /* required */
                 keyType: 'API_KEY', /* required */
-                usagePlanId: "458o87" /* required */
+                usagePlanId: usagePlanId /* required */
             };
             var api_key = data.value;
             apigateway.createUsagePlanKey(params, function(err, data) {
@@ -103,9 +105,9 @@ var insertApiRecord = function(cred, api_key, callback, errorCallback){
     });
 };
 
-var createApiKey = function(cred, callback, errorCallback){
+var createApiKey = function(cred, usagePlanId, callback, errorCallback){
     // actually create api key
-    provisionAPI(cred.enrollId, cred.secret, function(api_key){
+    provisionAPI(cred.enrollId, cred.secret, usagePlanId, function(api_key){
         console.log("successfully added API KEY for "+cred.enrollId);
         insertApiRecord(cred, api_key, callback, errorCallback);
     }, errorCallback);
@@ -120,10 +122,10 @@ exports.handler = function(event, context, callback){
     createAccount(function(creds){
         console.log("create api account success: "+JSON.stringify(creds));
 
-        createApiKey(creds.voter, function(){
+        createApiKey(creds.voter, VOTER_USAGE_PLAN, function(){
             console.log("create api voter success");
 
-            createApiKey(creds.admin, function(){
+            createApiKey(creds.admin, ADMIN_USAGE_PLAN, function(){
                 console.log("create api admin success");
                 callback(null, {
                     "statusCode": 200,
