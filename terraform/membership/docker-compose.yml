@@ -1,0 +1,10 @@
+membersrvc:
+  container_name: membersrvc
+  image: hyperledger/fabric-membersrvc
+  volumes:
+    - /home/ec2-user/membership:/user/membership
+    - /var/hyperledger:/var/hyperledger
+  command: sh -c "cp /user/membership/membersrvc.yaml /opt/gopath/src/github.com/hyperledger/fabric/membersrvc && membersrvc"
+  restart: unless-stopped
+  ports:
+    - 7054:7054

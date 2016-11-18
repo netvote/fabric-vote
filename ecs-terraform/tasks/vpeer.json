@@ -6,7 +6,7 @@
     "memory": 512,
     "essential": true,
     "environment" : [
-      { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "true" },
+      { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "false" },
       { "name" : "CORE_PEER_ADDRESS", "value" : "vp_NODEINDEX_.peer.stevenlanders.net:7051" },
       { "name" : "CORE_SECURITY_ENROLLID", "value": "vp_NODEINDEX_"},
       { "name" : "CORE_SECURITY_ENROLLSECRET", "value": "netvotepeer"},

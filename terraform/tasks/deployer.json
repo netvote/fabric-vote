@@ -1,0 +1,25 @@
+[
+  {
+    "name": "deployer",
+    "image": "845215180986.dkr.ecr.us-east-1.amazonaws.com/netvote/chain-api",
+    "cpu": 10,
+    "memory": 512,
+    "essential": true,
+    "environment" : [
+      { "name" : "MEMBERSRVC_ADDRESS", "value" : "members.stevenlanders.net:7054" },
+      { "name" : "KEY_VALUE_STORE", "value" : "/tmp/hl_sdk_node_key_value_store" },
+      { "name" : "CORE_PEER_ADDRESS", "value" : "root.stevenlanders.net:7051" },
+      { "name" : "PEER_ADDRESS", "value" : "root.stevenlanders.net:7051" },
+      { "name" : "CORE_CHAINCODE_ID_NAME", "value" : "netvote" },
+      { "name" : "DEPLOY_USER", "value" : "deployer" },
+      { "name" : "DEPLOY_PASS", "value" : "netvotedeployer" }
+    ],
+    "command": ["sh", "-c", "node deploy && tail -f /var/log/bootstrap.log"],
+    "mountPoints": [
+      {
+        "containerPath": "/tmp/keyValStore",
+        "sourceVolume": "chaincerts"
+      }
+    ]
+  }
+]

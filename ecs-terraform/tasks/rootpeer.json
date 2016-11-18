@@ -6,7 +6,7 @@
     "memory": 512,
     "essential": true,
     "environment" : [
-      { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "true" },
+      { "name" : "CORE_PEER_ADDRESSAUTODETECT", "value" : "false" },
       { "name" : "CORE_VM_ENDPOINT", "value" : "unix:///tmp/docker.sock" },
       { "name" : "CORE_LOGGING_LEVEL", "value" : "DEBUG" },
       { "name" : "CORE_PEER_ID", "value" : "vp0" },

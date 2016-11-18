@@ -1,0 +1,26 @@
+rootpeer:
+  container_name: root-peer
+  image: hyperledger/fabric-peer
+  restart: unless-stopped
+  environment:
+    - CORE_PEER_ADDRESSAUTODETECT=false
+    - CORE_PEER_ADDRESS=IP_ADDRESS:7051
+    - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+    - CORE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=vp1
+    - CORE_SECURITY_ENROLLID=vp1
+    - CORE_SECURITY_ENROLLSECRET=netvotepeer
+    - CORE_SECURITY_ENABLED=true
+    - CORE_PEER_PKI_ECA_PADDR=members.stevenlanders.net:7054
+    - CORE_PEER_PKI_TCA_PADDR=members.stevenlanders.net:7054
+    - CORE_PEER_PKI_TLSCA_PADDR=members.stevenlanders.net:7054
+    - CORE_PEER_VALIDATOR_CONSENSUS_PLUGIN=pbft
+    - CORE_PBFT_GENERAL_N=4
+    - CORE_PBFT_GENERAL_TIMEOUT_REQUEST=10s
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /var/hyperledger:/var/hyperledger
+  command: sh -c "peer node start"
+  ports:
+    - 7051:7051
+    - 7050:7050
