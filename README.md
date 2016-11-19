@@ -41,8 +41,7 @@ Payload:
 		"Props": {
 			"key": "value"
 		}
-	}],
-	{
+	},{
 		"Id": "favorite-beer",
 		"Name": "Pick your two favorite beers",
 		"Options": [{
