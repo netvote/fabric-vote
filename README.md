@@ -161,7 +161,7 @@ Payload:
 ##### Fields
 - **DecisionId**: Unique identifier for this decision
 - **Selections**: Map of selection to number of votes to allocate (must add up to ResponsesRequired)
-- **Props**: (optional) Arbitrary key-value map to aid the API user.  Here this is likely attributeso of vote or voter.
+- **Props**: (optional) Arbitrary key-value map to aid the API user.  (This can be attributes of vote or voter)
 - **Reasons**: (optional Arbitrary map of key:OBJ
 ### Chaincode (golang):  
 
