@@ -41,6 +41,8 @@ type Vote struct {
 type VoterDecision struct {
 	DecisionId string
 	Selections map[string]int
+	Reasons map[string]map[string]string
+	Props map[string]string
 }
 
 func stringInSlice(a string, list []Option) bool {
