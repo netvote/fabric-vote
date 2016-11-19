@@ -17,32 +17,54 @@ This example ballot includes two decisions.
 Payload:
 ```
 {
-   "Ballot": {
-      "Name": "Test Election",
-      "Private": false
-   },
-   "Decisions": [{
-      "Id": "favorite-color",
-      "Name": "What is your favorite color?",
-        {Id:"red", Name:"The Color Red", Props: {"starts_with_r":true}},
-        {Id:"blue", Name:"The Color Blue", Props: {"starts_with_r": false}}
-      "Props": {
-        "key":"value"
-      }
-   }, {
-      "Id": "favorite-beer",
-      "Name": "Pick your two favorite beers",
-      "Options": [ 
-        {Id:"IPA", Name:"IPA", Props: {"color":"yellow"}},
-        {Id:"pils", Name:"Pilsner", Props: {"color":"light yellow"}}
-      ],          
-      "Props": {
-        "key":"value"
-      },
-      "ResponsesRequired": 2,
-      "Repeatable": true,
-      "RepeatVoteDelayNS": 86400000000
-   }]
+	"Ballot": {
+		"Name": "Test Election",
+		"Private": false
+	},
+	"Decisions": [{
+		"Id": "favorite-color",
+		"Name": "What is your favorite color?",
+		{
+			Id: "red",
+			Name: "The Color Red",
+			Props: {
+				"starts_with_r": true
+			}
+		},
+		{
+			Id: "blue",
+			Name: "The Color Blue",
+			Props: {
+				"starts_with_r": false
+			}
+		}
+		"Props": {
+			"key": "value"
+		}
+	}],
+	{
+		"Id": "favorite-beer",
+		"Name": "Pick your two favorite beers",
+		"Options": [{
+			Id: "IPA",
+			Name: "IPA",
+			Props: {
+				"color": "yellow"
+			}
+		}, {
+			Id: "pils",
+			Name: "Pilsner",
+			Props: {
+				"color": "light yellow"
+			}
+		}],
+		"Props": {
+			"key": "value"
+		},
+		"ResponsesRequired": 2,
+		"Repeatable": true,
+		"RepeatVoteDelayNS": 86400000000
+	}]
 }
 ````
 ##### Fields
@@ -65,13 +87,13 @@ Gets current results for a decision
 Response:
 ```
 {
-   "Id": "favorite-color",
-   "Results": {
-      "ALL" : {
-         "Red": 1,
-         "Blue": 2
-      }
-   }
+	"Id": "favorite-color",
+	"Results": {
+		"ALL": {
+			"Red": 1,
+			"Blue": 2
+		}
+	}
 }
 ````
 ##### Fields
@@ -91,34 +113,51 @@ This calls an `init_voter` followed by a `get_ballot` chaincode transaction.
 Response:
 ```
 [{
-   "Id": "favorite-color",
-   "Name": "What is your favorite color?",
-   "BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
-   "Options": [
-      {Id:"red", Name:"The Color Red", Props: {"starts_with_r":true}},
-      {Id:"blue", Name:"The Color Blue", Props: {"starts_with_r": false}}
-   ],
-   "Props": {
-     "key":"value"
-   },
-   "Repeatable": false,
-   "RepeatVoteDelayNS": 0,
-   "ResponsesRequired": 1
-},
-{
-   "Id": "favorite-beer",
-   "Name": "What is your favorite beer?",
-   "BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
-   "Options": [
-      {Id:"IPA", Name:"IPA", Props: {"color":"yellow"}},
-      {Id:"pils", Name:"Pilsner", Props: {"color":"light yellow"}}
-   ],
-   "Props": {
-     "key":"value"
-   },
-   "Repeatable": false,
-   "RepeatVoteDelayNS": 0,
-   "ResponsesRequired": 1
+	"Id": "favorite-color",
+	"Name": "What is your favorite color?",
+	"BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
+	"Options": [{
+		Id: "red",
+		Name: "The Color Red",
+		Props: {
+			"starts_with_r": true
+		}
+	}, {
+		Id: "blue",
+		Name: "The Color Blue",
+		Props: {
+			"starts_with_r": false
+		}
+	}],
+	"Props": {
+		"key": "value"
+	},
+	"Repeatable": false,
+	"RepeatVoteDelayNS": 0,
+	"ResponsesRequired": 1
+}, {
+	"Id": "favorite-beer",
+	"Name": "What is your favorite beer?",
+	"BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
+	"Options": [{
+		Id: "IPA",
+		Name: "IPA",
+		Props: {
+			"color": "yellow"
+		}
+	}, {
+		Id: "pils",
+		Name: "Pilsner",
+		Props: {
+			"color": "light yellow"
+		}
+	}],
+	"Props": {
+		"key": "value"
+	},
+	"Repeatable": false,
+	"RepeatVoteDelayNS": 0,
+	"ResponsesRequired": 1
 }]
 ```
 ##### Fields
