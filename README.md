@@ -24,11 +24,17 @@ Payload:
    "Decisions": [{
       "Id": "favorite-color",
       "Name": "What is your favorite color?",
-      "Options": ["Red", "Blue","Green"]
+      "Options": ["Red", "Blue","Green"],
+      "Props": {
+        "key":"value"
+      }
    }, {
       "Id": "favorite-beer",
       "Name": "Pick your two favorite beers",
       "Options": ["IPA", "Amber Ale","Stout","Pilsner"],
+      "Props": {
+        "key":"value"
+      },
       "ResponsesRequired": 2,
       "Repeatable": true,
       "RepeatVoteDelayNS": 86400000000
@@ -37,12 +43,14 @@ Payload:
 ````
 ##### Fields
 - **Ballot.Name**: Name for ballot (not displayed today)
-- **Ballot.Private**: (default=true) If true, only assigned voters will see the decisions.  If false, any voter for this account will see these decisions.  
+- **Ballot.Private**: (optional, default=true) If true, only assigned voters will see the decisions.  If false, any voter for this account will see these decisions.  
 - **Decision.Id**: Key for this decision (must be unique)
 - **Decision.Name**: Displayable name for this decision
 - **Decision.Options**: List of options for this decision
-- **Decision.RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
-- **Decision.ResponsesRequired**: Number of vote units that must be spent in a decision.
+- **Decision.Props**: (optional) Arbitrary key-value map to aid the API user.  (image urls, etc)
+- **Decision.Repeatable**: (optional, default=false) Allow a voter to vote again after RepeatVoteDelayNS elapses
+- **Decision.RepeatVoteDelayNS**: (optional) Wait period in Nanoseconds before a repeat-vote is allowed
+- **Decision.ResponsesRequired**: (optional) Number of vote units that must be spent in a decision.
 
 #### Get Results 
 
@@ -87,6 +95,9 @@ Response:
       "blue",
       "green"
    ],
+   "Props": {
+     "key":"value"
+   },
    "Repeatable": false,
    "RepeatVoteDelayNS": 0,
    "ResponsesRequired": 1
@@ -101,6 +112,9 @@ Response:
       "pilsner",
       "stout"
    ],
+   "Props": {
+     "key":"value"
+   },
    "Repeatable": false,
    "RepeatVoteDelayNS": 0,
    "ResponsesRequired": 1
@@ -109,9 +123,10 @@ Response:
 ##### Fields
 - **Id**: Unique identifier for this decision
 - **Name**: Displayable name for this decision
-- **BallotId**: Which ballot this decision was created for
+- **BallotId**: (optional) Which ballot this decision was created for
 - **Options**: List of selections
-- **Repeatable**: Whether a user can vote more than once
+- **Props**: Arbitrary key-value map to aid the API user.  (image urls, etc)
+- **Repeatable**:Whether a user can vote more than once
 - **RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
 - **ResponsesRequired**: Number of vote units that must be spent in a decision.
 
@@ -126,6 +141,14 @@ Payload:
    "DecisionId": "favorite-color",
    "Selections": {
      "red": 1
+   },
+   "Props": {
+     "key" "value"
+   }
+   "Reasons": {
+     "red": {
+       "key":"value"
+     }
    }
  },
  {
@@ -138,7 +161,8 @@ Payload:
 ##### Fields
 - **DecisionId**: Unique identifier for this decision
 - **Selections**: Map of selection to number of votes to allocate (must add up to ResponsesRequired)
-
+- **Props**: (optional) Arbitrary key-value map to aid the API user.  Here this is likely attributeso of vote or voter.
+- **Reasons**: (optional Arbitrary map of key:OBJ
 ### Chaincode (golang):  
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
@@ -146,7 +170,7 @@ This contains blockchian transactions for creating decisions, voters, and castin
 #### Admin Invoke Transactions
 - `add_decision`: (admin) create a decision configuration 
 - `add_ballot`: (admin) creates a ballot with list of decision objects, returns ballot with ID
-- `add_voter`: (admin) creates a voter on blockchain and allocates votes *may not be needed*
+- `add_voter`: (admin) creates a voter on blockchain and allocates votes *primarily for private voting*
 
 #### Voter Invoke Transactions
 - `init_voter`: (voter) lazy-creates a voter and allocates votes for all 'public ballots' in same account
