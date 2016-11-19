@@ -120,13 +120,13 @@ Response:
 		Id: "red",
 		Name: "The Color Red",
 		Props: {
-			"starts_with_r": true
+			"key": "value"
 		}
 	}, {
 		Id: "blue",
 		Name: "The Color Blue",
 		Props: {
-			"starts_with_r": false
+			"key": "value"
 		}
 	}],
 	"Props": {
@@ -140,16 +140,16 @@ Response:
 	"Name": "What is your favorite beer?",
 	"BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
 	"Options": [{
-		Id: "IPA",
-		Name: "IPA",
-		Props: {
-			"color": "yellow"
+		"Id": "IPA",
+		"Name": "IPA",
+		"Props": {
+			"key": "value"
 		}
 	}, {
-		Id: "pils",
-		Name: "Pilsner",
-		Props: {
-			"color": "light yellow"
+		"Id": "pils",
+		"Name": "Pilsner",
+		"Props": {
+			"key": "value"
 		}
 	}],
 	"Props": {
@@ -165,7 +165,7 @@ Response:
 - **Name**: Displayable name for this decision
 - **BallotId**: (optional) Which ballot this decision was created for
 - **Options**: List of selections (only Id is required)
-- **Props**: Arbitrary key-value map to aid the API user.  (image urls, etc)
+- **Props**: Arbitrary key-value (string:string) map to aid the API user.  (image urls, etc)
 - **Repeatable**:Whether a user can vote more than once
 - **RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
 - **ResponsesRequired**: Number of vote units that must be spent in a decision.
@@ -201,7 +201,7 @@ Payload:
 ##### Fields
 - **DecisionId**: Unique identifier for this decision
 - **Selections**: Map of selection to number of votes to allocate (must add up to ResponsesRequired)
-- **Props**: (optional) Arbitrary key-value map to aid the API user.  (This can be attributes of vote or voter)
+- **Props**: (optional) Arbitrary key-value (string:string) map to aid the API user.  (This can be attributes of vote or voter)
 - **Reasons**: (optional Arbitrary map of key:OBJ
 ### Chaincode (golang):  
 
