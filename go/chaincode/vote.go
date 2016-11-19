@@ -43,9 +43,9 @@ type VoterDecision struct {
 	Selections map[string]int
 }
 
-func stringInSlice(a string, list []string) bool {
+func stringInSlice(a string, list []Option) bool {
 	for _, b := range list {
-		if b == a {
+		if b.Id == a {
 			return true
 		}
 	}
@@ -72,7 +72,7 @@ func validate(stateDao StateDAO, vote Vote){
 			total += sel
 		}
 		if(total != voter.DecisionIdToVoteCount[decision.DecisionId]){
-			panic("All votes must be cast")
+			panic("Values must add up to exactly ResponsesRequired")
 		}
 
 		for k,_ := range decision.Selections {
@@ -223,7 +223,7 @@ func addVoter(stateDao StateDAO, voter Voter){
 func parseArg(arg string, value interface{}){
 	var arg_bytes = []byte(arg)
 	if err := json.Unmarshal(arg_bytes, &value); err != nil {
-		panic("error parsing arg json")
+		panic(err)
 	}
 }
 
@@ -383,11 +383,18 @@ const TYPE_BALLOT = "BALLOT"
 const TYPE_ACCOUNT_BALLOTS = "ACCOUNT_BALLOTS"
 const ATTRIBUTE_ACCOUNT_ID = "account_id"
 
+type Option struct {
+	Id string
+	Name string
+	Props map[string]string
+}
+
 type Decision struct {
 	Id                string
 	Name              string
 	BallotId          string
-	Options           []string
+	Options           []Option
+	Props map[string]string
 	ResponsesRequired int
 	RepeatVoteDelayNS int64
 	Repeatable        bool
