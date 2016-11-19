@@ -25,17 +25,17 @@ Payload:
 		"Id": "favorite-color",
 		"Name": "What is your favorite color?",
 		{
-			Id: "red",
-			Name: "The Color Red",
-			Props: {
-				"starts_with_r": true
+			"Id": "red",
+			"Name": "The Color Red",
+			"Props": {
+				"key": "value"
 			}
 		},
 		{
-			Id: "blue",
-			Name: "The Color Blue",
-			Props: {
-				"starts_with_r": false
+			"Id": "blue",
+			"Name": "The Color Blue",
+			"Props": {
+				"key": "value"
 			}
 		}
 		"Props": {
@@ -46,16 +46,16 @@ Payload:
 		"Id": "favorite-beer",
 		"Name": "Pick your two favorite beers",
 		"Options": [{
-			Id: "IPA",
-			Name: "IPA",
-			Props: {
-				"color": "yellow"
+			"Id": "IPA",
+			"Name": "IPA",
+			"Props": {
+				"key": "value"
 			}
 		}, {
-			Id: "pils",
-			Name: "Pilsner",
-			Props: {
-				"color": "light yellow"
+			"Id": "pils",
+			"Name": "Pilsner",
+			"Props": {
+				"key": "value"
 			}
 		}],
 		"Props": {
@@ -117,15 +117,15 @@ Response:
 	"Name": "What is your favorite color?",
 	"BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
 	"Options": [{
-		Id: "red",
-		Name: "The Color Red",
-		Props: {
+		"Id": "red",
+		"Name": "The Color Red",
+		"Props": {
 			"key": "value"
 		}
 	}, {
-		Id: "blue",
-		Name: "The Color Blue",
-		Props: {
+		"Id": "blue",
+		"Name": "The Color Blue",
+		"Props": {
 			"key": "value"
 		}
 	}],
