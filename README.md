@@ -24,14 +24,18 @@ Payload:
    "Decisions": [{
       "Id": "favorite-color",
       "Name": "What is your favorite color?",
-      "Options": ["Red", "Blue","Green"],
+        {Id:"red", Name:"The Color Red", Props: {"starts_with_r":true}},
+        {Id:"blue", Name:"The Color Blue", Props: {"starts_with_r": false}}
       "Props": {
         "key":"value"
       }
    }, {
       "Id": "favorite-beer",
       "Name": "Pick your two favorite beers",
-      "Options": ["IPA", "Amber Ale","Stout","Pilsner"],
+      "Options": [ 
+        {Id:"IPA", Name:"IPA", Props: {"color":"yellow"}},
+        {Id:"pils", Name:"Pilsner", Props: {"color":"light yellow"}}
+      ],          
       "Props": {
         "key":"value"
       },
@@ -91,9 +95,8 @@ Response:
    "Name": "What is your favorite color?",
    "BallotId": "ba0d6eee-6f45-4a0c-b3f7-2f8659b72c2b",
    "Options": [
-      "red",
-      "blue",
-      "green"
+      {Id:"red", Name:"The Color Red", Props: {"starts_with_r":true}},
+      {Id:"blue", Name:"The Color Blue", Props: {"starts_with_r": false}}
    ],
    "Props": {
      "key":"value"
@@ -107,10 +110,8 @@ Response:
    "Name": "What is your favorite beer?",
    "BallotId": "47db9c36-af07-4383-baaf-0e143c4cb232",
    "Options": [
-      "ipa",
-      "amber ale",
-      "pilsner",
-      "stout"
+      {Id:"IPA", Name:"IPA", Props: {"color":"yellow"}},
+      {Id:"pils", Name:"Pilsner", Props: {"color":"light yellow"}}
    ],
    "Props": {
      "key":"value"
@@ -124,7 +125,7 @@ Response:
 - **Id**: Unique identifier for this decision
 - **Name**: Displayable name for this decision
 - **BallotId**: (optional) Which ballot this decision was created for
-- **Options**: List of selections
+- **Options**: List of selections (only Id is required)
 - **Props**: Arbitrary key-value map to aid the API user.  (image urls, etc)
 - **Repeatable**:Whether a user can vote more than once
 - **RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
