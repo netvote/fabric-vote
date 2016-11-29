@@ -1,19 +1,18 @@
 'use strict';
 
-var CHAINCODE_ID = "91afb32cd2189691357b6a7d25d4edc6b15b3079b4e43be135c2cf09d13f37d8";
+var CHAINCODE_ID = "";
+var CHAIN_HOSTNAME = "";
+var CHAIN_PORT = 80;
+
 console.log('Loading function');
 var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 var http = require('http');
 
-var getChaincodeId = function(){
-    return CHAINCODE_ID;
-}
-
 var postRequest = function(urlPath, postData, callback, errorCallback){
     var options = {
-        hostname: 'peer.stevenlanders.net',
-        port: 80,
+        hostname: CHAIN_HOSTNAME,
+        port: CHAIN_PORT,
         path: urlPath,
         method: 'POST',
         headers: {
@@ -69,7 +68,7 @@ var invokeChaincode = function(method, operation, payload, secureContext, callba
         "method":method,
         "params": {
             "chaincodeID": {
-                "name" : getChaincodeId()
+                "name" : CHAINCODE_ID
             },
             "ctorMsg": {
                 "args":[operation, JSON.stringify(payload)]
@@ -93,25 +92,44 @@ var handleError = function(e, callback){
     callback(null, respObj);
 };
 
+var getDynamoItem = function(table, key, value, errorCallback, callback){
+    var params = {
+        TableName: table,
+        Key:{
+            key: value
+        }
+    };
+
+    dynamo.getItem(params, function(err, data) {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+            errorCallback(err);
+        } else{
+            callback(data);
+        }
+    });
+};
+
+var getApiCredentials = function(apiKey, errorCallback, callback){
+    getDynamoItem("accounts", "api_key", apiKey, errorCallback, callback);
+};
+
 exports.handler = function(event, context, callback){
     console.log('Received event:', JSON.stringify(event, null, 2));
     console.log('Received context:', JSON.stringify(context, null, 2));
 
     var apiKey = event.requestContext.identity.apiKey;
 
-    var params = {
-        TableName: "accounts",
-        Key:{
-            "api_key": apiKey
-        }
-    };
+    getDynamoItem("config","id","chaincode",function(err){
+        handleError(err, callback);
+    }, function(data) {
+        CHAINCODE_ID = data.Item.version;
+        CHAIN_HOSTNAME = data.Item.hostname;
+        CHAIN_PORT = data.Item.port;
 
-    dynamo.getItem(params, function(err, data) {
-        var respObj = {};
-        if (err) {
-            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        getApiCredentials(apiKey, function(err){
             handleError(err, callback);
-        } else {
+        }, function(data){
             console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
 
             var enrollmentId = data.Item.enrollment_id;
@@ -125,7 +143,7 @@ exports.handler = function(event, context, callback){
                 castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function(result){
                     console.log("castVote success: "+JSON.stringify(result));
 
-                    respObj = {
+                    var respObj = {
                         "statusCode": 200,
                         "headers": {},
                         "body": JSON.stringify({"result":"success"})
@@ -141,7 +159,8 @@ exports.handler = function(event, context, callback){
             }, function(e){
                 handleError(e, callback);
             });
-        }
+        });
+
     });
 
 };
