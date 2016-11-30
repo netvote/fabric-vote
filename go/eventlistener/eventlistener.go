@@ -26,6 +26,8 @@ import (
 
 	"github.com/hyperledger/fabric/events/consumer"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"encoding/json"
+	"time"
 )
 
 type adapter struct {
@@ -34,6 +36,15 @@ type adapter struct {
 	cEvent             chan *pb.Event_ChaincodeEvent
 	listenToRejections bool
 	chaincodeID        string
+}
+
+type NetVoteEvent struct {
+	Payload string `json:"payload"`
+	AccountId string `json:"accountId"`
+	ChaincodeId string `json:"chaincodeId"`
+	EventName string `json:"eventName"`
+	TxId string `json:"txId"`
+	Timestamp int64 `json:"timestamp"`
 }
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
@@ -115,28 +126,23 @@ func main() {
 
 	for {
 		select {
-		case b := <-a.notfy:
-			fmt.Printf("\n")
-			fmt.Printf("\n")
-			fmt.Printf("Received block\n")
-			fmt.Printf("--------------\n")
-			for _, r := range b.Block.Transactions {
-				fmt.Printf("Transaction:\n\t[%v]\n", r)
-			}
-		case r := <-a.rejected:
-			fmt.Printf("\n")
-			fmt.Printf("\n")
-			fmt.Printf("Received rejected transaction\n")
-			fmt.Printf("--------------\n")
-			fmt.Printf("Transaction error:\n%s\t%s\n", r.Rejection.Tx.Txid, r.Rejection.ErrorMsg)
 		case ce := <-a.cEvent:
-			//TODO: forward event to kinesis
+			var evt map[string]interface{}
+			json.Unmarshal(ce.ChaincodeEvent.Payload, &evt)
 
-			fmt.Printf("\n")
-			fmt.Printf("\n")
-			fmt.Printf("Received chaincode event\n")
-			fmt.Printf("------------------------\n")
-			fmt.Printf("Chaincode Event:%v\n", ce)
+			netvoteEvent := NetVoteEvent{
+						AccountId: evt["AccountId"].(string),
+						Payload: string(ce.ChaincodeEvent.Payload),
+						TxId:ce.ChaincodeEvent.TxID,
+						Timestamp: time.Now().UnixNano(),
+						EventName: ce.ChaincodeEvent.EventName,
+						ChaincodeId: ce.ChaincodeEvent.ChaincodeID}
+
+			eventBytes, _ := json.Marshal(netvoteEvent)
+
+			fmt.Printf("\nNETVOTE EVENT:\n"+string(eventBytes)+"\n")
+
+			//TODO: forward event to kinesis
 		}
 	}
 }
