@@ -223,6 +223,7 @@ When a user votes, the following event is emitted.  Currently this goes nowhere,
 - **payload**: string containing the Vote and Voter objects
 - **accountId**: customer account ID for this vote
 - **chaincodeId**: ID of the chaincode (typically a hash representing version).  Treat as opaque.
+- **eventName**: name of this event (currently only VOTE)
 - **txId**: blockchain transaction ID for this vote
 - **timestamp**: current time in unix nanoseconds for this event 
 
