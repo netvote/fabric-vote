@@ -26,7 +26,7 @@ This example ballot includes two decisions.
 2. Favorte Beer: A user may vote once per day and must choose two favorite beers each time.
 
 Payload:
-```
+```json
 {
 	"Ballot": {
 		"Name": "Test Election",
@@ -35,24 +35,23 @@ Payload:
 	"Decisions": [{
 		"Id": "favorite-color",
 		"Name": "What is your favorite color?",
-		{
+		"Options": [{
 			"Id": "red",
 			"Name": "The Color Red",
 			"Props": {
 				"key": "value"
 			}
-		},
-		{
+		}, {
 			"Id": "blue",
 			"Name": "The Color Blue",
 			"Props": {
 				"key": "value"
 			}
-		}
+		}],
 		"Props": {
 			"key": "value"
 		}
-	},{
+	}, {
 		"Id": "favorite-beer",
 		"Name": "Pick your two favorite beers",
 		"Options": [{
@@ -95,7 +94,7 @@ Payload:
 Gets current results for a decision
 
 Response:
-```
+```json
 {
 	"Id": "favorite-color",
 	"Results": {
@@ -122,7 +121,7 @@ Returns the list of decisions this voter is eligible to make.  These might be ac
 This calls an `init_voter` followed by a `get_ballot` chaincode transaction.
 
 Response:
-```
+```json
 [{
 	"Id": "favorite-color",
 	"Name": "What is your favorite color?",
@@ -187,7 +186,7 @@ Response:
 Casts a vote for a voter
 
 Payload:
-```
+```json
 [{
    "DecisionId": "favorite-color",
    "Selections": {
@@ -220,7 +219,7 @@ Payload:
 #### VOTE <a name="voteEvent"></a>
 
 When a user votes, the following event is emitted.  Currently this goes nowhere, but will likely be sent to kinesis.  
-```
+```json
 {
 	"payload": "{\"Voter\":{\"Id\":\"slanders2\",\"Partitions\":[],\"DecisionIdToVoteCount\":{\"favorite-beer\":0,\"favorite-beer2\":0,\"favorite-color\":0,\"favorite-color2\":0},\"LastVoteTimestampNS\":1480542484398474615,\"Props\":null},\"Vote\":{\"VoterId\":\"slanders2\",\"Decisions\":[{\"DecisionId\":\"favorite-beer2\",\"Selections\":{\"ipa\":1},\"Reasons\":null,\"Props\":null},{\"DecisionId\":\"favorite-color2\",\"Selections\":{\"blue\":1},\"Reasons\":null,\"Props\":null}]},\"AccountId\":\"acct-id\"}",
 	"accountId": "acct-id",
