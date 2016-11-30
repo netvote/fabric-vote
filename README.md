@@ -2,8 +2,19 @@
 
 This evolved from the [Hyperledger Starter Kit](https://hyperledger-fabric.readthedocs.io/en/latest/starter/fabric-starter-kit/#fabric-starter-kit).  
 
-### Admin APIs
-#### Create Ballot
+1. [Admin APIs](#adminApis)
+    1. [Create Ballot](#createBallot)
+    2. [Get Results](#getResults)
+2. [Voter APIs](#voterApis)
+    1. [Get Ballot](#getBallot)
+    2. [Cast Vote](#castVote)
+3. [Events](#events)
+    1. [Vote Event](#voteEvent)
+4. [Chaincode](#chaincode) 
+
+
+### Admin APIs <a name="adminApis"></a>
+#### Create Ballot <a name="createBallot"></a>
 
 `POST /ballot`
 
@@ -77,7 +88,7 @@ Payload:
 - **Decision.RepeatVoteDelayNS**: (optional) Wait period in Nanoseconds before a repeat-vote is allowed
 - **Decision.ResponsesRequired**: (optional) Number of vote units that must be spent in a decision.
 
-#### Get Results 
+#### Get Results <a name="getResults"></a>
 
 `GET /decision/{decision-id}`
 
@@ -100,9 +111,9 @@ Response:
 - **Results.{key}**: Values like ALL above are a partition of voters.  By default, only ALL is a partition.  
 - **Results[key] map**: The results are in the form OPTION:SCORE
 
-### Voter APIs
+### Voter APIs <a name="voterApis"></a>
 
-#### Get Ballot for Voter
+#### Get Ballot for Voter <a name="getBallot"></a>
 
 `GET /ballot/{voter-id}`
 
@@ -170,7 +181,7 @@ Response:
 - **RepeatVoteDelayNS**: Wait period in Nanoseconds before a repeat-vote is allowed
 - **ResponsesRequired**: Number of vote units that must be spent in a decision.
 
-#### Cast Vote
+#### Cast Vote <a name="castVote"></a>
 
 `POST /vote/{voter-id}`
 Casts a vote for a voter
@@ -204,9 +215,9 @@ Payload:
 - **Props**: (optional) Arbitrary key-value (string:string) map to aid the API user.  (This can be attributes of vote or voter)
 - **Reasons**: (optional Arbitrary map of key:OBJ
 
-### Emitted Events
+### Events <a name="events"></a>
 
-#### VOTE
+#### VOTE <a name="voteEvent"></a>
 
 When a user votes, the following event is emitted.  Currently this goes nowhere, but will likely be sent to kinesis.  
 ```
@@ -228,7 +239,7 @@ When a user votes, the following event is emitted.  Currently this goes nowhere,
 - **timestamp**: current time in unix nanoseconds for this event 
 
 
-### Chaincode (golang):  
+### Chaincode <a name="chaincode"></a>
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
 
