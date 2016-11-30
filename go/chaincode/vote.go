@@ -45,6 +45,11 @@ type VoterDecision struct {
 	Props map[string]string
 }
 
+type VoteEvent struct {
+	Voter Voter
+	Vote Vote
+}
+
 func stringInSlice(a string, list []Option) bool {
 	for _, b := range list {
 		if b.Id == a {
@@ -174,6 +179,9 @@ func castVote(stateDao StateDAO, vote Vote){
 	}
 	voter.LastVoteTimestampNS = getNow()
 	stateDao.SaveVoter(voter)
+
+	voteEvent := VoteEvent{Vote: vote, Voter: voter}
+	stateDao.setVoteEvent(voteEvent)
 }
 
 func getNow() (int64){
@@ -431,6 +439,14 @@ type AccountBallots struct{
 	Id string
 	PublicBallotIds map[string]bool
 	PrivateBallotIds map[string]bool
+}
+
+func (t *StateDAO) setVoteEvent(voteEvent VoteEvent){
+	var json_bytes, err = json.Marshal(voteEvent)
+	if err != nil {
+		panic("Invalid JSON while setting event")
+	}
+	t.Stub.SetEvent("vote", json_bytes)
 }
 
 func (t *StateDAO) getKey(objectType string, objectId string) (string){
