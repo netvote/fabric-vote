@@ -101,6 +101,7 @@ Response:
 - **Results[key] map**: The results are in the form OPTION:SCORE
 
 ### Voter APIs
+
 #### Get Ballot for Voter
 
 `GET /ballot/{voter-id}`
@@ -202,6 +203,30 @@ Payload:
 - **Selections**: Map of selection to number of votes to allocate (must add up to ResponsesRequired)
 - **Props**: (optional) Arbitrary key-value (string:string) map to aid the API user.  (This can be attributes of vote or voter)
 - **Reasons**: (optional Arbitrary map of key:OBJ
+
+### Emitted Events
+
+#### VOTE
+
+When a user votes, the following event is emitted.  Currently this goes nowhere, but will likely be sent to kinesis.  
+```
+{
+	"payload": "{\"Voter\":{\"Id\":\"slanders2\",\"Partitions\":[],\"DecisionIdToVoteCount\":{\"favorite-beer\":0,\"favorite-beer2\":0,\"favorite-color\":0,\"favorite-color2\":0},\"LastVoteTimestampNS\":1480542484398474615,\"Props\":null},\"Vote\":{\"VoterId\":\"slanders2\",\"Decisions\":[{\"DecisionId\":\"favorite-beer2\",\"Selections\":{\"ipa\":1},\"Reasons\":null,\"Props\":null},{\"DecisionId\":\"favorite-color2\",\"Selections\":{\"blue\":1},\"Reasons\":null,\"Props\":null}]},\"AccountId\":\"acct-id\"}",
+	"accountId": "acct-id",
+	"chaincodeId": "netvote",
+	"eventName": "VOTE",
+	"txId": "6c61485b-c911-4b9b-bf80-f0ee08b6dffd",
+	"timestamp": 1480542484292108684
+}
+```
+##### Event Fields
+- **payload**: string containing the Vote and Voter objects
+- **accountId**: customer account ID for this vote
+- **chaincodeId**: ID of the chaincode (typically a hash representing version).  Treat as opaque.
+- **txId**: blockchain transaction ID for this vote
+- **timestamp**: current time in unix nanoseconds for this event 
+
+
 ### Chaincode (golang):  
 
 This contains blockchian transactions for creating decisions, voters, and casting votes. 
