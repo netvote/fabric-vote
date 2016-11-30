@@ -446,7 +446,7 @@ func (t *StateDAO) setVoteEvent(voteEvent VoteEvent){
 	if err != nil {
 		panic("Invalid JSON while setting event")
 	}
-	t.Stub.SetEvent("vote", json_bytes)
+	t.Stub.SetEvent("VOTE", json_bytes)
 }
 
 func (t *StateDAO) getKey(objectType string, objectId string) (string){
