@@ -48,6 +48,7 @@ type VoterDecision struct {
 type VoteEvent struct {
 	Voter Voter
 	Vote Vote
+	AccountId string
 }
 
 func stringInSlice(a string, list []Option) bool {
@@ -435,6 +436,7 @@ type AccountBallots struct{
 }
 
 func (t *StateDAO) setVoteEvent(voteEvent VoteEvent){
+	voteEvent.AccountId = t.getAccountId()
 	var json_bytes, err = json.Marshal(voteEvent)
 	if err != nil {
 		panic("Invalid JSON while setting event")

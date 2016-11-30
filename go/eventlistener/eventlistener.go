@@ -96,8 +96,12 @@ func main() {
 	var eventAddress string
 	var listenToRejections bool
 	var chaincodeID string
+
+	//TODO: use peer address
 	flag.StringVar(&eventAddress, "events-address", "192.168.99.100:7053", "address of events server")
 	flag.BoolVar(&listenToRejections, "listen-to-rejections", false, "whether to listen to rejection events")
+
+	//TODO: look up chaincode ID from dynamoDB config
 	flag.StringVar(&chaincodeID, "events-from-chaincode", "netvote", "listen to events from given chaincode")
 	flag.Parse()
 
@@ -126,6 +130,8 @@ func main() {
 			fmt.Printf("--------------\n")
 			fmt.Printf("Transaction error:\n%s\t%s\n", r.Rejection.Tx.Txid, r.Rejection.ErrorMsg)
 		case ce := <-a.cEvent:
+			//TODO: forward event to kinesis
+
 			fmt.Printf("\n")
 			fmt.Printf("\n")
 			fmt.Printf("Received chaincode event\n")
