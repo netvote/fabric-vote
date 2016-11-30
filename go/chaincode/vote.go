@@ -424,6 +424,7 @@ type Voter struct {
 	Partitions []string
 	DecisionIdToVoteCount map[string]int
 	LastVoteTimestampNS int64
+	Props map[string]string
 }
 
 type AccountBallots struct{
