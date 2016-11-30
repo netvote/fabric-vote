@@ -251,8 +251,6 @@ func allocateVotesToVoter(stateDao StateDAO, voter Voter)([]Decision){
 	var result = make([]Decision, 0)
 	for ballotId := range accountBallots.PublicBallotIds {
 		ballot := stateDao.GetBallot(ballotId)
-		log("ballot:")
-		printJson(ballot)
 		addBallotDecisionsToVoter(stateDao, ballot, &voter, false)
 	}
 	stateDao.SaveVoter(voter)
@@ -285,11 +283,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballotDecisions BallotDecisions
 			parseArg(args[0], &ballotDecisions)
-			ballot := addBallot(stateDao, ballotDecisions)
-			result, err =  json.Marshal(ballot)
-			if(err != nil){
-				panic("error marshalling result")
-			}
+			addBallot(stateDao, ballotDecisions)
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
@@ -303,7 +297,6 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			parseArg(args[0], &voter)
 			voter = lazyInitVoter(stateDao, voter)
 			allocateVotesToVoter(stateDao, voter)
-			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {

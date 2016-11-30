@@ -39,7 +39,7 @@ enroll();
 
 // Enroll a user.
 function enroll() {
-    console.log("enrolling user admin ...");
+    console.log("enrolling user "+deploy_user+" ...");
     // Enroll "admin" which is preregistered in the membersrvc.yaml
     chain.enroll(deploy_user, deploy_pass, function(err, admin) {
         if (err) {

@@ -1,0 +1,19 @@
+# USED FOR REMOTE DEPLOYMENTS
+netvote:
+  container_name: netvote
+  image: hyperledger/fabric-starter-kit
+  volumes:
+    # mount local dev into container
+    - ./node/:/user/vote
+    - ./go/chaincode/:/opt/gopath/src/netvote/go/chaincode/
+  environment:
+    - MEMBERSRVC_ADDRESS=members.stevenlanders.net:7054
+    - PEER_ADDRESS=peer.stevenlanders.net:7051
+    - KEY_VALUE_STORE=/tmp/hl_sdk_node_key_value_store
+    # dev mode
+    - CORE_CHAINCODE_ID_NAME=netvote
+    - CORE_PEER_ADDRESS=peer.stevenlanders.net:7051
+  # deploy
+  command: tail -f /user/vote/register.js
+  stdin_open: true
+  tty: true

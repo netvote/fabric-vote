@@ -20,8 +20,10 @@ chain.setKeyValStore( hfc.newFileKeyValStore('/tmp/keyValStore') );
 console.log("member services address ="+MEMBERSRVC_ADDRESS);
 chain.setMemberServicesUrl("grpc://"+MEMBERSRVC_ADDRESS);
 
+var admin_user =  process.env['ADMIN_USER'];
+var admin_pass =  process.env['ADMIN_PASS'];
 
-chain.enroll("admin", "Xurw3yU9zI0l", function(err, admin) {
+chain.enroll(admin_user, admin_pass, function(err, admin) {
     if (err) {
         console.log("ERROR: failed to register admin: %s",err);
         process.exit(1);
