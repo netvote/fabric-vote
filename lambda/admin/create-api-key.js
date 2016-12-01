@@ -88,7 +88,8 @@ var insertApiRecord = function(cred, api_key, callback, errorCallback){
         Item:{
             "enrollment_id": cred.enrollId,
             "enrollment_secret": cred.secret,
-            "api_key": api_key
+            "api_key": api_key,
+            "account_id": cred.enrollId.replace("voter_","").replace("admin_")
         }
     };
 
