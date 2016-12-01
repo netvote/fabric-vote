@@ -5,6 +5,7 @@ var uuid = require("uuid");
 var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 
+//TODO: encrypt and checkout decryption key from KMS
 var signingKey = "c254rpMd4mc9dW0F5T2y4J9SnhBxr2Io";
 
 
