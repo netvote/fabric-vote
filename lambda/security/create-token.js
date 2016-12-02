@@ -1,3 +1,4 @@
+'use strict';
 process.env['PATH'] = process.env['PATH'] + "/" + process.env['LAMBDA_TASK_ROOT'];
 
 var nJwt = require('njwt');
@@ -35,10 +36,9 @@ var generateToken = function(widgetId, voteId, accountId, callback){
 var getDynamoItem = function(table, key, value, errorCallback, callback){
     var params = {
         TableName: table,
-        Key:{
-            key: value
-        }
+        Key:{}
     };
+    params.Key[key] = value;
 
     dynamo.getItem(params, function(err, data) {
         if (err) {
@@ -76,14 +76,14 @@ exports.handler = function(event, context, callback){
         handleError(err, callback);
     }, function(data){
 
-        var accountId = data.item.accountId;
+        var accountId = data.Item.accountId;
 
         generateToken(widgetId, voterId, accountId, function(tokenId){
 
             var voterIdCookieName = "voterId_"+accountId;
             var tokenIdCookieName = "token_"+widgetId;
 
-            cookies = {};
+            var cookies = {};
             cookies[voterIdCookieName] = {
                 value: voterId
             };
@@ -97,7 +97,10 @@ exports.handler = function(event, context, callback){
                 "headers": {
                     "Cookies": toCookieStr(cookies)
                 },
-                "body": {}
+                "body": {
+                    "voterId": voterId,
+                    "token": tokenId
+                }
             });
         });
     });
