@@ -133,7 +133,7 @@ func TestVoteChaincode_Invoke_AddDecision_Error(t *testing.T) {
 
 	stub.MockTransactionStart("test-invoke-add-decision")
 
-	checkInvokeError(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`}, "unauthorized")
+	checkInvokeError(t, stub, "add_decision", []string{`{"Id":"test-id","Name":"What is your decision?","Options":["a","b"]}`}, "unauthorized: role=")
 }
 
 func TestVoteChaincode_Invoke_AddDecision(t *testing.T) {
