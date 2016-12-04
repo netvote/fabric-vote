@@ -1,11 +1,11 @@
 [
   {
-    "DecisionId": "favorite-color1479593532",
+    "DecisionId": "favorite-colorIDX",
     "Selections": {
       "blue":1
     }
   },  {
-    "DecisionId": "favorite-beer1479593532",
+    "DecisionId": "favorite-beerIDX",
     "Selections": {
       "ipa":1,
       "pils":1

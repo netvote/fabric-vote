@@ -4,8 +4,8 @@ sleep 5
 stop ecs
 docker pull hyperledger/fabric-baseimage:x86_64-0.2.1
 docker tag hyperledger/fabric-baseimage:x86_64-0.2.1 hyperledger/fabric-baseimage:latest
-docker run --name bootstrap-base -i -d -t hyperledger/fabric-baseimage:latest /bin/bash -c "mkdir -p /opt/gopath/src/github.com/hyperledger; cd /opt/gopath/src/github.com/hyperledger; git clone https://github.com/hyperledger/fabric.git; mkdir -p /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/; cp /opt/gopath/src/github.com/hyperledger/fabric/peer/core.yaml /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml; tail -f /var/log/bootstrap.log"
-sleep 20
+docker run --name bootstrap-base -i -d -t hyperledger/fabric-baseimage:latest /bin/bash -c "mkdir -p /opt/gopath/src/github.com/hyperledger; cd /opt/gopath/src/github.com/hyperledger; git clone -b v0.6 https://github.com/hyperledger/fabric.git; mkdir -p /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/; cp /opt/gopath/src/github.com/hyperledger/fabric/peer/core.yaml /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml; sed -i 's/#.*$//' /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml; sed -i '/^\s*$/d' /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml; perl -0777 -i.original -pe 's/security:\n    enabled: false/security:\n    enabled: true/igs' /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml && cp /opt/gopath/src/build-chaincode/vendor/github.com/hyperledger/fabric/peer/core.yaml /opt/gopath/src/github.com/hyperledger/fabric/peer/core.yaml && tail -f /var/log/bootstrap.log"
+sleep 30
 docker commit -m "updating base" bootstrap-base hyperledger/fabric-baseimage:latest
 docker stop bootstrap-base
 sleep 5

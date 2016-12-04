@@ -21,7 +21,6 @@ resource "aws_instance" "membership" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/ec2-user/membership/init.sh",
-      "mkdir -p /var/hyperledger/production/db",
       "sudo /home/ec2-user/membership/init.sh"
     ]
     connection {

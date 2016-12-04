@@ -95,10 +95,9 @@ var handleError = function(e, callback){
 var getDynamoItem = function(table, key, value, errorCallback, callback){
     var params = {
         TableName: table,
-        Key:{
-            key: value
-        }
+        Key:{}
     };
+    params.Key[key] = value;
 
     dynamo.getItem(params, function(err, data) {
         if (err) {

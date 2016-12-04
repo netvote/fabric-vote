@@ -54,7 +54,7 @@ var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
 
 
 var createBallot = function(enrollmentId, ballot, callback, errorCallback){
-    invokeChaincode("invoke", "cast_votes", ballot, enrollmentId, callback, errorCallback);
+    invokeChaincode("invoke", "add_ballot", ballot, enrollmentId, callback, errorCallback);
 };
 
 var invokeChaincode = function(method, operation, payload, secureContext, callback, errorCallback){
@@ -95,10 +95,9 @@ var handleError = function(e, callback){
 var getDynamoItem = function(table, key, value, errorCallback, callback){
     var params = {
         TableName: table,
-        Key:{
-            key: value
-        }
+        Key:{}
     };
+    params.Key[key] = value;
 
     dynamo.getItem(params, function(err, data) {
         if (err) {

@@ -46,7 +46,6 @@ netvote:
     - MEMBERSRVC_ADDRESS=membersrvc:7054
     - PEER_ADDRESS=peer:7051
     - KEY_VALUE_STORE=/tmp/hl_sdk_node_key_value_store
-    # dev mode
     - DEPLOY_MODE=dev
     - DEPLOY_USER=deployer
     - DEPLOY_PASS=netvotedeployer

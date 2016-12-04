@@ -5,8 +5,8 @@ mkdir -p /var/hyperledger/production/db
 
 cd /home/ec2-user/membership/
 
-echo "awaiting docker...sleep 10..."
-sleep 10
+echo "awaiting docker...sleep 30..."
+sleep 30
 
 sed -i "s/IP_ADDRESS/$(curl http://169.254.169.254/latest/meta-data/local-ipv4)/g" docker-compose.yml
 

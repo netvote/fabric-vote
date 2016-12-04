@@ -89,7 +89,7 @@ var insertApiRecord = function(cred, api_key, callback, errorCallback){
             "enrollment_id": cred.enrollId,
             "enrollment_secret": cred.secret,
             "api_key": api_key,
-            "account_id": cred.enrollId.replace("voter_","").replace("admin_"),
+            "account_id": cred.enrollId.replace("voter_","").replace("admin_",""),
             "role": cred.enrollId.substring(0, cred.enrollId.indexOf("_"))
         }
     };

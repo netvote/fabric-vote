@@ -1,6 +1,6 @@
 peer:
   container_name: peer
-  image: hyperledger/fabric-peer
+  image: hyperledger/fabric-peer:x86_64-0.6.1-preview
   restart: unless-stopped
   environment:
     - CORE_PEER_ADDRESSAUTODETECT=false
@@ -11,6 +11,7 @@ peer:
     - CORE_SECURITY_ENROLLID=NETVOTE_PEER_ID
     - CORE_SECURITY_ENROLLSECRET=netvotepeer
     - CORE_SECURITY_ENABLED=true
+    - CORE_SECURITY_PRIVACY=true
     - CORE_PEER_PKI_ECA_PADDR=members.stevenlanders.net:7054
     - CORE_PEER_PKI_TCA_PADDR=members.stevenlanders.net:7054
     - CORE_PEER_PKI_TLSCA_PADDR=members.stevenlanders.net:7054
@@ -25,3 +26,4 @@ peer:
   ports:
     - 7051:7051
     - 7050:7050
+    - 7053:7053

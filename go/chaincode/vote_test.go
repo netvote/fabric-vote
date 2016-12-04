@@ -46,8 +46,8 @@ func to_byte_array(function string, args []string)([][]byte){
 }
 
 func checkInvokeWithResponse(t *testing.T, stub *shim.MockStub, function string, txId string, args []string, value string) {
-	b_args := to_byte_array(function, args)
-	bytes, err := stub.MockInvoke(txId, b_args)
+	//b_args := to_byte_array(function, args)
+	bytes, err := stub.MockInvoke(txId, function, args)
 	if err != nil {
 		fmt.Println("Invoke", args, "failed", err)
 		t.FailNow()
@@ -69,7 +69,7 @@ func checkInvoke(t *testing.T, stub *shim.MockStub, function string, args []stri
 
 func checkInvokeTX(t *testing.T, stub *shim.MockStub, transactionId string, function string, args []string) {
 	fmt.Println(args)
-	_, err := stub.MockInvoke(transactionId, to_byte_array(function, args))
+	_, err := stub.MockInvoke(transactionId, function, args)
 	if err != nil {
 		fmt.Println("Invoke", args, "failed", err)
 		t.FailNow()
@@ -77,7 +77,7 @@ func checkInvokeTX(t *testing.T, stub *shim.MockStub, transactionId string, func
 }
 
 func checkInvokeError(t *testing.T, stub *shim.MockStub, function string, args []string, error string) {
-	_, err := stub.MockInvoke("1", to_byte_array(function, args))
+	_, err := stub.MockInvoke("1", function, args)
 	if err == nil {
 		fmt.Println("No error was found, but error was expected: "+error)
 		t.FailNow()
@@ -110,7 +110,7 @@ func checkState(t *testing.T, stub *shim.MockStub, name string, value string) {
 }
 
 func checkQuery(t *testing.T, stub *shim.MockStub, function string, args []string, value string) {
-	bytes, err := stub.MockQuery(to_byte_array(function, args))
+	bytes, err := stub.MockQuery(function, args)
 	if err != nil {
 		fmt.Println("Query", args, "failed", err)
 		t.FailNow()

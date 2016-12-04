@@ -26,7 +26,6 @@ resource "aws_instance" "root-peer" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/ec2-user/root-peer/init.sh",
-      "mkdir -p /var/hyperledger/production/db",
       "sudo /home/ec2-user/root-peer/init.sh"
     ]
     connection {

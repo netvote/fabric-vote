@@ -197,9 +197,12 @@ func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
 	if(os.Getenv("TEST_ENV") != ""){
 		return true
 	}
+
+	result_bytes, _ := stub.ReadCertAttribute(ATTRIBUTE_ROLE)
+
 	result, _ := stub.VerifyAttribute(ATTRIBUTE_ROLE, []byte(role))
 	if(!result){
-		panic("unauthorized")
+		panic("unauthorized: role="+string(result_bytes))
 	}
 	return result
 }
@@ -273,7 +276,6 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 	}()
 
 	stateDao := StateDAO{Stub: stub}
-
 	if function == FUNC_ADD_DECISION {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decision Decision
@@ -352,17 +354,17 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 
 // CHAINCODE INTERFACE METHODS
 
-func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	function, args := stub.GetFunctionAndParameters()
+func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	//function, args := stub.GetFunctionAndParameters()
 	return handleInvoke(stub, function, args)
 }
 
-func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface) ([]byte, error)  {
+func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error)  {
 	return nil, nil
 }
 
-func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	function, args := stub.GetFunctionAndParameters()
+func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	//function, args := stub.GetFunctionAndParameters()
 	return handleQuery(stub, function, args)
 }
 

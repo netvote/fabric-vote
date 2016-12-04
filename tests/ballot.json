@@ -1,14 +1,48 @@
-[
-  {
-    "DecisionId": "favorite-colorIDX",
-    "Selections": {
-      "blue":1
+{
+  "Ballot": {
+    "Name": "Test Election",
+    "Private": false
+  },
+  "Decisions": [{
+    "Id": "favorite-colorIDX",
+    "Name": "What is your favorite color?",
+    "Options": [{
+      "Id": "red",
+      "Name": "The Color Red",
+      "Props": {
+        "key": "value"
+      }
+    }, {
+      "Id": "blue",
+      "Name": "The Color Blue",
+      "Props": {
+        "key": "value"
+      }
+    }],
+    "Props": {
+      "key": "value"
     }
-  },  {
-    "DecisionId": "favorite-beerIDX",
-    "Selections": {
-      "ipa":1,
-      "pils":1
-    }
-  }
-] 
+  }, {
+    "Id": "favorite-beerIDX",
+    "Name": "Pick your two favorite beers",
+    "Options": [{
+      "Id": "ipa",
+      "Name": "IPA",
+      "Props": {
+        "key": "value"
+      }
+    }, {
+      "Id": "pils",
+      "Name": "Pilsner",
+      "Props": {
+        "key": "value"
+      }
+    }],
+    "Props": {
+      "key": "value"
+    },
+    "ResponsesRequired": 2,
+    "Repeatable": true,
+    "RepeatVoteDelayNS": 86400000000
+  }]
+}
