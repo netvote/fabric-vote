@@ -21,12 +21,13 @@ const ROLE_ADMIN = "admin"
 const ROLE_VOTER = "voter"
 
 // function names
+const QUERY_GET_ADMIN_BALLOT = "get_admin_ballot";
+
 const FUNC_ADD_DECISION = "add_decision"
 const FUNC_ADD_VOTER = "add_voter"
 const FUNC_ADD_BALLOT = "add_ballot"
 const FUNC_CAST_VOTES = "cast_votes"
 const FUNC_INIT_VOTER = "init_voter"
-const FUNC_ALLOCATE_BALLOT_VOTES = "allocate_ballot_votes"
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT = "get_ballot"
 
@@ -335,6 +336,8 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 	}()
 
 	stateDao := StateDAO{Stub: stub}
+	log("FUNCTION="+function)
+
 	if function == QUERY_GET_RESULTS {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decisionResults DecisionResults
@@ -347,6 +350,24 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			parseArg(args[0], &voter_obj)
 			voter := stateDao.GetVoter(voter_obj.Id)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
+		}
+	} else if function == QUERY_GET_ADMIN_BALLOT {
+
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var ballot_obj Ballot
+
+			parseArg(args[0], &ballot_obj)
+
+			ballot := stateDao.GetBallot(ballot_obj.Id)
+
+			bDecisions := make([]Decision,0)
+			for _, decisionId := range ballot.Decisions{
+				d := stateDao.GetDecision(decisionId)
+				bDecisions = append(bDecisions, d)
+			}
+
+			bd := BallotDecisions { Ballot: ballot, Decisions: bDecisions }
+			result, err = json.Marshal(bd)
 		}
 	}
 	return
