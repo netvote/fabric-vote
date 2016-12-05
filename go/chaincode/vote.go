@@ -34,6 +34,55 @@ const QUERY_GET_BALLOT = "get_ballot"
 type VoteChaincode struct {
 }
 
+type Option struct {
+	Id string
+	Name string
+	Props map[string]string
+}
+
+type Decision struct {
+	Id                string
+	Name              string
+	BallotId          string
+	Options           []Option
+	Props map[string]string
+	ResponsesRequired int
+	RepeatVoteDelayNS int64
+	Repeatable        bool
+}
+
+type Ballot struct{
+	Id string
+	Name string
+	Decisions []string
+	Private bool
+}
+
+type BallotDecisions struct{
+	Ballot Ballot
+	Decisions []Decision
+}
+
+type DecisionResults struct{
+	Id string
+	Results map[string]map[string]int
+}
+
+type Voter struct {
+	Id string
+	Dimensions []string
+	DecisionIdToVoteCount map[string]int
+	LastVoteTimestampNS int64
+	Props map[string]string
+}
+
+type AccountBallots struct{
+	Id string
+	PublicBallotIds map[string]bool
+	PrivateBallotIds map[string]bool
+}
+
+
 type Vote struct {
 	VoterId string
 	Decisions []VoterDecision
@@ -119,9 +168,6 @@ func addDecisionToVoter(voter *Voter, decision Decision){
 
 func addBallot(stateDao StateDAO, ballotDecisions BallotDecisions) (Ballot){
 	ballot := ballotDecisions.Ballot
-	if(ballot.Id == "") {
-		ballot.Id = stateDao.Stub.GetTxID()
-	}
 	ballot.Decisions = []string{}
 
 	for _, decision := range ballotDecisions.Decisions {
@@ -411,54 +457,6 @@ const TYPE_RESULTS = "RESULTS"
 const TYPE_BALLOT = "BALLOT"
 const TYPE_ACCOUNT_BALLOTS = "ACCOUNT_BALLOTS"
 const ATTRIBUTE_ACCOUNT_ID = "account_id"
-
-type Option struct {
-	Id string
-	Name string
-	Props map[string]string
-}
-
-type Decision struct {
-	Id                string
-	Name              string
-	BallotId          string
-	Options           []Option
-	Props map[string]string
-	ResponsesRequired int
-	RepeatVoteDelayNS int64
-	Repeatable        bool
-}
-
-type Ballot struct{
-	Id string
-	Name string
-	Decisions []string
-	Private bool
-}
-
-type BallotDecisions struct{
-	Ballot Ballot
-	Decisions []Decision
-}
-
-type DecisionResults struct{
-	Id string
-	Results map[string]map[string]int
-}
-
-type Voter struct {
-	Id string
-	Dimensions []string
-	DecisionIdToVoteCount map[string]int
-	LastVoteTimestampNS int64
-	Props map[string]string
-}
-
-type AccountBallots struct{
-	Id string
-	PublicBallotIds map[string]bool
-	PrivateBallotIds map[string]bool
-}
 
 func (t *StateDAO) setVoteEvent(voteEvent VoteEvent){
 	voteEvent.AccountId = t.getAccountId()
