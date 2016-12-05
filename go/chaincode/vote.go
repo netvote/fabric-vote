@@ -13,8 +13,8 @@ import (
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
 //TODO: add time windows for ballots/decisions? to allow valid voting periods
 
-// voter partition (defaults)
-const PARTITION_ALL = "ALL"
+// voter dimension (defaults)
+const DIMENSION_ALL = "ALL"
 const ATTRIBUTE_ROLE = "role"
 
 const ROLE_ADMIN = "admin"
@@ -119,7 +119,9 @@ func addDecisionToVoter(voter *Voter, decision Decision){
 
 func addBallot(stateDao StateDAO, ballotDecisions BallotDecisions) (Ballot){
 	ballot := ballotDecisions.Ballot
-	ballot.Id = stateDao.Stub.GetTxID()
+	if(ballot.Id == "") {
+		ballot.Id = stateDao.Stub.GetTxID()
+	}
 	ballot.Decisions = []string{}
 
 	for _, decision := range ballotDecisions.Decisions {
@@ -155,22 +157,22 @@ func castVote(stateDao StateDAO, vote Vote){
 		decision := stateDao.GetDecision(voter_decision.DecisionId)
 
 		for selection, vote_count := range voter_decision.Selections {
-			if(nil == decisionResults.Results[PARTITION_ALL]){
-				decisionResults.Results[PARTITION_ALL] = map[string]int{selection: 0}
+			if(nil == decisionResults.Results[DIMENSION_ALL]){
+				decisionResults.Results[DIMENSION_ALL] = map[string]int{selection: 0}
 			}
 
 			//cast vote for this decision
-			decisionResults.Results[PARTITION_ALL][selection] += vote_count
+			decisionResults.Results[DIMENSION_ALL][selection] += vote_count
 			//if not repeatable, remove votes from voter
 			if(!decision.Repeatable){
 				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
 			}
 
-			for _, partition := range voter.Partitions {
-				if(nil == decisionResults.Results[partition]){
-					decisionResults.Results[partition] = map[string]int{selection: 0}
+			for _, dimension := range voter.Dimensions {
+				if(nil == decisionResults.Results[dimension]){
+					decisionResults.Results[dimension] = map[string]int{selection: 0}
 				}
-				decisionResults.Results[partition][selection] += vote_count
+				decisionResults.Results[dimension][selection] += vote_count
 			}
 		}
 		results_array = append(results_array, decisionResults)
@@ -229,8 +231,8 @@ func addVoter(stateDao StateDAO, voter Voter){
 	if(voter.DecisionIdToVoteCount == nil){
 		voter.DecisionIdToVoteCount = make(map[string]int)
 	}
-	if(voter.Partitions == nil){
-		voter.Partitions = []string{}
+	if(voter.Dimensions == nil){
+		voter.Dimensions = []string{}
 	}
 	stateDao.SaveVoter(voter)
 }
@@ -446,7 +448,7 @@ type DecisionResults struct{
 
 type Voter struct {
 	Id string
-	Partitions []string
+	Dimensions []string
 	DecisionIdToVoteCount map[string]int
 	LastVoteTimestampNS int64
 	Props map[string]string
