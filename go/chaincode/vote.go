@@ -384,7 +384,6 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 	}()
 
 	stateDao := StateDAO{Stub: stub}
-	log("FUNCTION="+function)
 
 	if function == QUERY_GET_RESULTS {
 		if(hasRole(stub, ROLE_ADMIN)) {
@@ -400,10 +399,8 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
 	} else if function == QUERY_GET_ADMIN_BALLOT {
-
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballot_obj Ballot
-
 			parseArg(args[0], &ballot_obj)
 
 			ballot := stateDao.GetBallot(ballot_obj.Id)
