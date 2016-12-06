@@ -20,27 +20,48 @@ var postRequest = function(urlPath, postData, callback, errorCallback){
             'Content-Length': Buffer.byteLength(postData)
         }
     };
-
     var req = http.request(options, function(res){
         var body = '';
         res.setEncoding('utf8');
-
         res.on('data', function (chunk) {
             body += chunk;
         });
-
         res.on('end', function(){
             callback(JSON.parse(body));
         });
     });
-
     req.on('error', function(e){
         errorCallback(e);
     });
-
     // write data to request body
     req.write(postData);
     req.end();
+};
+
+var insertDynamoDoc = function(table, obj, errorCallback, callback){
+    var params = {
+        TableName: table,
+        Item: obj
+    };
+    console.log("dynamo payload: "+JSON.stringify(params));
+    dynamo.putItem(params, function(err) {
+        if (err) {
+            console.log("insert error!");
+            errorCallback(err);
+        } else {
+            console.log("insert success!");
+            callback();
+        }
+    });
+};
+
+var saveBallotToDynamo = function(ballot, errorCallback, callback){
+    var obj = {
+        "id": ballot.Ballot.Id,
+        "payload": new Buffer(JSON.stringify(ballot)).toString("base64"),
+        "requires2FA": (true === ballot.Ballot["Requires2FA"])
+    };
+    insertDynamoDoc("ballots", obj, errorCallback, callback);
 };
 
 var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
@@ -120,40 +141,40 @@ exports.handler = function(event, context, callback){
     console.log('Received context:', JSON.stringify(context, null, 2));
 
     var apiKey = event.requestContext.identity.apiKey;
-
-    getDynamoItem("config","id","chaincode",function(err){
+    var errorHandler = function(err){
         handleError(err, callback);
-    }, function(data) {
-        CHAINCODE_ID = data.Item.version;
-        CHAIN_HOSTNAME = data.Item.hostname;
-        CHAIN_PORT = data.Item.port;
+    }
 
-        getApiCredentials(apiKey, function (err) {
-            handleError(err, callback);
-        }, function (data) {
-            var enrollmentId = data.Item.enrollment_id;
-            var enrollmentSecret = data.Item.enrollment_secret;
-            var ballot = JSON.parse(event.body);
+    getDynamoItem("config","id","chaincode",errorHandler,
+        function(data) {
+            CHAINCODE_ID = data.Item.version;
+            CHAIN_HOSTNAME = data.Item.hostname;
+            CHAIN_PORT = data.Item.port;
 
-            enroll(enrollmentId, enrollmentSecret, function () {
-                console.log("enroll success");
-                createBallot(enrollmentId, ballot, function (result) {
-                    console.log("createBallot success: " + JSON.stringify(result));
+            getApiCredentials(apiKey,  errorHandler,
+                function (data) {
+                    var enrollmentId = data.Item.enrollment_id;
+                    var enrollmentSecret = data.Item.enrollment_secret;
+                    var ballot = JSON.parse(event.body);
 
-                    var respObj = {
-                        "statusCode": 200,
-                        "headers": {},
-                        "body": JSON.stringify({"result": "success"})
-                    };
+                    enroll(enrollmentId, enrollmentSecret, function () {
+                        console.log("enroll success");
+                        createBallot(enrollmentId, ballot, function (result) {
+                            saveBallotToDynamo(ballot, errorHandler,
+                                function(){
+                                    console.log("createBallot success: " + JSON.stringify(result));
 
-                    callback(null, respObj);
-                }, function (e) {
-                    handleError(e, callback);
+                                    var respObj = {
+                                        "statusCode": 200,
+                                        "headers": {},
+                                        "body": JSON.stringify({"result": "success"})
+                                    };
+
+                                    callback(null, respObj);
+                                });
+                        }, errorHandler);
+
+                    }, errorHandler);
                 });
-
-            }, function (e) {
-                handleError(e, callback);
-            });
         });
-    });
 };
