@@ -1,7 +1,9 @@
 {
   "Ballot": {
+    "Id": "beercolor-IDX",
     "Name": "Test Election",
-    "Private": false
+    "Private": false,
+    "Requires2FA": true
   },
   "Decisions": [{
     "Id": "favorite-colorIDX",

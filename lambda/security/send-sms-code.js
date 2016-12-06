@@ -70,42 +70,56 @@ var getCode = function(accountId, voterId, errorCallback, callback){
     });
 };
 
+
+var getApiCredentials = function(apiKey, errorCallback, callback){
+    getDynamoItem("accounts", "api_key", apiKey, errorCallback, callback);
+};
+
 exports.handler = function(event, context, callback){
     console.log('Received event:', JSON.stringify(event, null, 2));
     console.log('Received context:', JSON.stringify(context, null, 2));
 
-    getDynamoItem("config","id","twilio",function(err){
+    var apiKey = event.requestContext.identity.apiKey;
+
+    getApiCredentials(apiKey, function(err){
         handleError(err, callback);
-    }, function(data) {
-        var sid = data.Item.sid;
-        var token = data.Item.token;
-        var client = twilio(sid, token);
+    }, function(data){
 
-        var toPhone = event.phone;
-        var fromPhone = data.Item.phone;
-        var voterId = event.voterId;
-        var accountId = event.accountId;
+        var accountId = data.Item.account_id;
 
-        getCode(accountId, voterId, function(err){
+        getDynamoItem("config","id","twilio",function(err){
             handleError(err, callback);
-        }, function(code){
-            client.messages.create({
-                body: "Ballot Code: "+code,
-                to: toPhone,
-                from: fromPhone
-            }, function(err) {
-                if (err) {
-                    handleError(err, callback);
-                } else {
-                    console.log("create api admin success");
-                    callback(null, {
-                        "statusCode": 200,
-                        "headers": {},
-                        "body": {"message": "sms sent"}
-                    });
-                }
+        }, function(data) {
+            var sid = data.Item.sid;
+            var token = data.Item.token;
+            var client = twilio(sid, token);
+
+            var body = JSON.parse(event.body);
+
+            var toPhone = body.phone;
+            var fromPhone = data.Item.phone;
+            var voterId = body.voterId;
+
+            getCode(accountId, voterId, function(err){
+                handleError(err, callback);
+            }, function(code){
+                client.messages.create({
+                    body: "Ballot Code: "+code,
+                    to: toPhone,
+                    from: fromPhone
+                }, function(err) {
+                    if (err) {
+                        handleError(err, callback);
+                    } else {
+                        console.log("create api admin success");
+                        callback(null, {
+                            "statusCode": 200,
+                            "headers": {},
+                            "body": JSON.stringify({"message": "sms sent"})
+                        });
+                    }
+                });
             });
         });
-    });
-
+    })
 };

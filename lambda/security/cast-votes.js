@@ -8,6 +8,7 @@ console.log('Loading function');
 var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 var http = require('http');
+var crypto = require('crypto');
 
 var postRequest = function(urlPath, postData, callback, errorCallback){
     var options = {
@@ -92,6 +93,15 @@ var handleError = function(e, callback){
     callback(null, respObj);
 };
 
+var handleUnauthorized = function(message, callback){
+    var respObj = {
+        "statusCode": 401,
+        "headers": {},
+        "body": JSON.stringify({"error": message})
+    };
+    callback(null, respObj);
+};
+
 var getDynamoItem = function(table, key, value, errorCallback, callback){
     var params = {
         TableName: table,
@@ -111,6 +121,33 @@ var getDynamoItem = function(table, key, value, errorCallback, callback){
 
 var getApiCredentials = function(apiKey, errorCallback, callback){
     getDynamoItem("accounts", "api_key", apiKey, errorCallback, callback);
+};
+
+
+var verifyTwoFactor = function(voterBallot, voterId, accountId, twoFactorCode, errorCallback, callback){
+    getDynamoItem("ballots", "id", voterBallot.Id, errorCallback, function(data){
+        if(data.Item.requires2FA){
+            const keyhash = crypto.createHash('sha256');
+            keyhash.update(accountId+":"+voterId);
+
+            getDynamoItem("ballot_sms_codes", "id", keyhash.digest('hex'), errorCallback, function(data){
+
+                var currentTime = new Date().getTime();
+                console.log(JSON.stringify(data));
+                console.log("code="+twoFactorCode+", date="+currentTime);
+
+                if(data.Item.expiration < currentTime){
+                    callback("expired");
+                } if(twoFactorCode && data.Item.code.toString() == twoFactorCode){
+                    callback("success");
+                } else{
+                    callback("fail");
+                }
+            });
+        } else{
+            callback("success");
+        }
+    });
 };
 
 exports.handler = function(event, context, callback){
@@ -135,31 +172,39 @@ exports.handler = function(event, context, callback){
             var enrollmentSecret = data.Item.enrollment_secret;
             var voterId = event.pathParameters.voterid;
 
-            var votes = JSON.parse(event.body);
+            var voterballot = JSON.parse(event.body);
+            var votes = voterballot.VoterBallot;
+            var accountId = data.Item.account_id;
 
-            enroll(enrollmentId, enrollmentSecret, function(){
-                console.log("enroll success");
-                castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function(result){
-                    console.log("castVote success: "+JSON.stringify(result));
+            var twoFactorCode = event.headers["nv-two-factor-code"];
 
-                    var respObj = {
-                        "statusCode": 200,
-                        "headers": {},
-                        "body": JSON.stringify({"result":"success"})
-                    };
+            verifyTwoFactor(voterballot, voterId, accountId, twoFactorCode, function(){ handleError(err, callback)}, function(result){
+                if(result == "success"){
+                    enroll(enrollmentId, enrollmentSecret, function(){
+                        console.log("enroll success");
+                        castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function(result){
+                            console.log("castVote success: "+JSON.stringify(result));
 
-                    console.log("cast vote success");
+                            var respObj = {
+                                "statusCode": 200,
+                                "headers": {},
+                                "body": JSON.stringify({"result":"success"})
+                            };
 
-                    callback(null, respObj);
-                }, function(e){
-                    handleError(e, callback);
-                });
+                            console.log("cast vote success");
 
-            }, function(e){
-                handleError(e, callback);
-            });
+                            callback(null, respObj);
+                        }, function(e){
+                            handleError(e, callback);
+                        });
+
+                    }, function(e){
+                        handleError(e, callback);
+                    });
+                }else{
+                    handleUnauthorized("two-factor failed: "+result, callback)
+                }
+            })
         });
-
     });
-
 };

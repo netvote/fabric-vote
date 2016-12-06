@@ -1,14 +1,18 @@
-[
-  {
-    "DecisionId": "favorite-colorIDX",
-    "Selections": {
-      "blue":1
+{
+  "Id": "beercolor-IDX",
+  "VoterBallot": [
+    {
+      "DecisionId": "favorite-colorIDX",
+      "Selections": {
+        "blue": 1
+      }
+    },
+    {
+      "DecisionId": "favorite-beerIDX",
+      "Selections": {
+        "ipa": 1,
+        "pils": 1
+      }
     }
-  },  {
-    "DecisionId": "favorite-beerIDX",
-    "Selections": {
-      "ipa":1,
-      "pils":1
-    }
-  }
-] 
+  ]
+}
