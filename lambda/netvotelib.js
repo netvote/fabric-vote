@@ -45,6 +45,10 @@ module.exports = {
         insertDynamoDoc(table, obj, errorCallback, callback);
     },
 
+    removeDynamoItem: function(table, key, value, errorCallback, callback){
+        deleteDynamoItem(table, key, value, errorCallback, callback);
+    },
+
     handleSuccess: function(obj, callback){
         var respObj = {
             "statusCode": 200,
@@ -106,6 +110,26 @@ var insertDynamoDoc = function(table, obj, errorCallback, callback){
             callback();
         }
     });
+};
+
+var deleteDynamoItem = function(table, key, value, errorCallback, callback){
+    var params = {
+        TableName: table,
+        Key:{}
+    };
+    params.Key[key] = value;
+
+    dynamo.deleteItem(params, function(err) {
+        if (err) {
+            console.log("delete error!");
+            errorCallback(err);
+        } else {
+            console.log("delete success!");
+            callback();
+        }
+    });
+
+    console.log("dynamo payload: "+JSON.stringify(params));
 };
 
 

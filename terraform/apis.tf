@@ -15,8 +15,9 @@ resource "aws_api_gateway_deployment" "netvote_dev" {
 #
 ####
 
-#POST /ballot
-resource "aws_api_gateway_resource" "create_ballot" {
+### CREATE
+
+resource "aws_api_gateway_resource" "admin_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   parent_id = "${aws_api_gateway_rest_api.netvote_api.root_resource_id}"
   path_part = "ballot"
@@ -24,7 +25,7 @@ resource "aws_api_gateway_resource" "create_ballot" {
 
 resource "aws_api_gateway_method" "create_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  resource_id = "${aws_api_gateway_resource.create_ballot.id}"
+  resource_id = "${aws_api_gateway_resource.admin_ballot.id}"
   http_method = "POST"
   authorization = "NONE"
   api_key_required = true
@@ -32,12 +33,39 @@ resource "aws_api_gateway_method" "create_ballot" {
 
 resource "aws_api_gateway_integration" "create_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  resource_id = "${aws_api_gateway_resource.create_ballot.id}"
+  resource_id = "${aws_api_gateway_resource.admin_ballot.id}"
   http_method = "POST"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.create_ballot.arn}/invocations"
 }
+
+### DELETE
+
+resource "aws_api_gateway_resource" "ballot_by_id" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  parent_id = "${aws_api_gateway_resource.admin_ballot.id}"
+  path_part = "{ballotId}"
+}
+
+resource "aws_api_gateway_method" "delete_ballot" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
+  http_method = "DELETE"
+  authorization = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "delete_ballot" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
+  http_method = "DELETE"
+  integration_http_method = "POST"
+  type = "AWS_PROXY"
+  uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.delete_ballot.arn}/invocations"
+}
+
+
 
 #######
 #
