@@ -171,6 +171,7 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 	checkGone(t, stub, "test/BALLOT/transaction-id")
 	checkGone(t, stub, "test/DECISION/test-id")
 	checkGone(t, stub, "test/RESULTS/test-id")
+	checkState(t, stub, "test/ACCOUNT_BALLOTS/test", `{"Id":"test","PublicBallotIds":{},"PrivateBallotIds":{}}`)
 
 }
 

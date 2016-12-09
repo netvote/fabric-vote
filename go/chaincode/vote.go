@@ -84,7 +84,6 @@ type AccountBallots struct{
 	PrivateBallotIds map[string]bool
 }
 
-
 type Vote struct {
 	VoterId string
 	Decisions []VoterDecision
@@ -536,6 +535,7 @@ func (t *StateDAO) DeleteDecision(decisionId string){
 
 func (t *StateDAO) DeleteBallot(ballotId string){
 	t.deleteState(TYPE_BALLOT, ballotId);
+	t.removeBallotFromAccountBallots(ballotId)
 }
 
 func (t *StateDAO) GetBallot(ballotId string)(Ballot){
@@ -559,6 +559,13 @@ func (t *StateDAO) saveState(objectType string, id string, object interface{}){
 	if(put_err != nil){
 		panic("Error while putting type:"+objectType+", id:"+id)
 	}
+}
+
+func (t *StateDAO) removeBallotFromAccountBallots(ballotId string){
+	accountBallots := t.GetAccountBallots()
+	delete(accountBallots.PublicBallotIds, ballotId)
+	delete(accountBallots.PrivateBallotIds, ballotId)
+	t.saveState(TYPE_ACCOUNT_BALLOTS, accountBallots.Id, accountBallots)
 }
 
 func (t *StateDAO) addToAccountBallots(ballot Ballot){
