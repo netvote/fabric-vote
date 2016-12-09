@@ -26,8 +26,10 @@ const QUERY_GET_ADMIN_BALLOT = "get_admin_ballot";
 const FUNC_ADD_DECISION = "add_decision"
 const FUNC_ADD_VOTER = "add_voter"
 const FUNC_ADD_BALLOT = "add_ballot"
+const FUNC_DELETE_BALLOT = "delete_ballot"
 const FUNC_CAST_VOTES = "cast_votes"
 const FUNC_INIT_VOTER = "init_voter"
+
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT = "get_ballot"
 
@@ -325,17 +327,29 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 	}()
 
 	stateDao := StateDAO{Stub: stub}
-	if function == FUNC_ADD_DECISION {
+	if function == FUNC_ADD_DECISION { //TODO: may not actually be a thing
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var decision Decision
 			parseArg(args[0], &decision)
 			addDecision(stateDao, decision)
 		}
 	} else if function == FUNC_ADD_BALLOT {
-		if(hasRole(stub, ROLE_ADMIN)) {
+		//ADD OR UPDATE
+		if (hasRole(stub, ROLE_ADMIN)) {
 			var ballotDecisions BallotDecisions
 			parseArg(args[0], &ballotDecisions)
 			addBallot(stateDao, ballotDecisions)
+		}
+	}else if function == FUNC_DELETE_BALLOT { //ADD OR UPDATE
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var ballot_payload Ballot
+			parseArg(args[0], &ballot_payload)
+
+			ballot := stateDao.GetBallot(ballot_payload.Id)
+			for _, decisionId := range ballot.Decisions{
+				stateDao.DeleteDecision(decisionId)
+			}
+			stateDao.DeleteBallot(ballot.Id)
 		}
 	}else if function == FUNC_ADD_VOTER { //TODO: bulk voter adding
 		if(hasRole(stub, ROLE_ADMIN)) {
@@ -481,6 +495,13 @@ func (t *StateDAO) getAccountId()(string){
 	return string(account_id_bytes)
 }
 
+func (t *StateDAO) deleteState(objectType string, id string){
+	err := t.Stub.DelState(t.getKey(objectType, id))
+	if(err != nil){
+		panic("error deleting "+objectType+" id:"+id)
+	}
+}
+
 func (t *StateDAO) getState(objectType string, id string, value interface{}){
 	config, err := t.Stub.GetState(t.getKey(objectType, id))
 	if(err != nil){
@@ -505,6 +526,16 @@ func (t *StateDAO) GetVoter(voterId string) (Voter) {
 	var v Voter
 	t.getState(TYPE_VOTER, voterId, &v)
 	return v
+}
+
+
+func (t *StateDAO) DeleteDecision(decisionId string){
+	t.deleteState(TYPE_RESULTS, decisionId);
+	t.deleteState(TYPE_DECISION, decisionId);
+}
+
+func (t *StateDAO) DeleteBallot(ballotId string){
+	t.deleteState(TYPE_BALLOT, ballotId);
 }
 
 func (t *StateDAO) GetBallot(ballotId string)(Ballot){

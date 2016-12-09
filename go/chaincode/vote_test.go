@@ -161,8 +161,17 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false}`)
 	checkState(t, stub, "test/DECISION/test-id", TEST_DECISION_JSON)
+	checkState(t, stub, "test/RESULTS/test-id", `{"Id":"test-id","Results":{}}`)
 
 	checkQuery(t, stub, "get_admin_ballot", []string{`{"Id":"transaction-id"}`}, `{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false},"Decisions":[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Props":{"image":"/url"}}],"Props":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}]}`)
+
+	checkInvokeTX(t, stub,  "transaction-id", "delete_ballot",
+		[]string{`{"Id":"transaction-id"}`})
+
+	checkGone(t, stub, "test/BALLOT/transaction-id")
+	checkGone(t, stub, "test/DECISION/test-id")
+	checkGone(t, stub, "test/RESULTS/test-id")
+
 }
 
 func TestVoteChaincode_Invoke_AddDecisionWithBallot(t *testing.T) {
