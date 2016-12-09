@@ -14,7 +14,7 @@
       { "name" : "ADMIN_USER", "value" : "admin" },
       { "name" : "ADMIN_PASS", "value" : "netvoteadmin" }
     ],
-    "command": ["sh", "-c", "node app"],
+    "command": ["sh", "-c", "cd /root && ./init.sh && cd /opt/gopath/src/github.com/hyperledger/fabric/examples/sdk/node && node api"],
     "mountPoints": [
       {
         "containerPath": "/tmp/keyValStore",

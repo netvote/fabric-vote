@@ -14,7 +14,7 @@
       { "name" : "DEPLOY_USER", "value" : "deployer" },
       { "name" : "DEPLOY_PASS", "value" : "netvotedeployer" }
     ],
-    "command": ["sh", "-c", "node deploy && tail -f /var/log/bootstrap.log"],
+    "command": ["sh", "-c", "cd /root && ./init.sh && cd /opt/gopath/src/github.com/hyperledger/fabric/examples/sdk/node && node deploy && tail -f /var/log/bootstrap.log"],
     "mountPoints": [
       {
         "containerPath": "/tmp/keyValStore",
