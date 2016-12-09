@@ -4,7 +4,7 @@ console.log('Loading function');
 var nvlib = require('netvotelib');
 
 var getResults = function(enrollmentId, decisionId, callback, errorCallback){
-    nvlib.queryChaincode("query", "get_results", {Id: decisionId}, enrollmentId, callback, errorCallback);
+    nvlib.queryChaincode("get_results", {Id: decisionId}, enrollmentId, callback, errorCallback);
 };
 
 exports.handler = function(event, context, callback){
@@ -17,7 +17,7 @@ exports.handler = function(event, context, callback){
         getResults(chaincodeUser.enrollment_id, decisionId, function(results){
             nvlib.handleSuccess(JSON.parse(results.result.message), callback);
         }, function(e){
-            handleError(e, callback);
+            nvlib.handleError(e, callback);
         });
 
     }, function(e) {

@@ -17,14 +17,15 @@ var verifyTwoFactor = function(voterBallot, voterId, accountId, twoFactorCode, e
             nvlib.getDynamoItem("ballot_sms_codes", "id", hashKey, errorCallback, function(data){
                 var currentTime = new Date().getTime();
                 console.log(JSON.stringify(data));
-                console.log("code="+twoFactorCode+", date="+currentTime);
-
-                if(data.Item.expiration < currentTime){
+                console.log("code="+twoFactorCode+", date="+currentTime+", lookup="+accountId+":"+voterId);
+                if(data.Item == undefined){
+                    callback("fail - no code");
+                } else if(data.Item.expiration < currentTime){
                     callback("expired");
-                } if(twoFactorCode && data.Item.code.toString() == twoFactorCode){
+                } else if(twoFactorCode && data.Item.code.toString() == twoFactorCode){
                     callback("success");
                 } else{
-                    callback("fail");
+                    callback("fail - not valid");
                 }
             });
         } else{
@@ -55,11 +56,12 @@ exports.handler = function(event, context, callback){
             function (result) {
                 if (result == "success") {
                     castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function (result) {
-                        nvlib.handleSuccess({"result": "success"})
+                        nvlib.handleSuccess({"result": "success"}, callback)
                     }, function (e) {
                         nvlib.handleError(e, callback);
                     });
                 } else {
+                    console.log("unauthorized = "+result);
                     nvlib.handleUnauthorized(callback);
                 }
             }

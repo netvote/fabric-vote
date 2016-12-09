@@ -10,25 +10,17 @@ var CHAIN_PORT = 80;
 
 module.exports = {
 
-    chainInit: function(event, callback, errorCallback){
-        var apiKey = event.requestContext.identity.apiKey;
+    nvInit: function(event, context, callback, errorCallback){
+        initNetvote(event, callback, errorCallback);
+    },
 
-        getDyanmoDoc("config","id","chaincode",errorCallback, function(data){
-            CHAINCODE_ID = data.Item.version;
-            CHAIN_HOSTNAME = data.Item.hostname;
-            CHAIN_PORT = data.Item.port;
-            getApiCredentials(apiKey, errorCallback, function(data){
-                if(data.Item == undefined){
-                    errorCallback("apiKey not found")
-                }else {
-                    var enrollmentId = data.Item.enrollment_id;
-                    var enrollmentSecret = data.Item.enrollment_secret;
-                    enroll(enrollmentId, enrollmentSecret, function () {
-                        callback(data.Item);
-                    }, errorCallback);
-                }
-            });
-        })
+    chainInit: function(event, context, callback, errorCallback){
+        initNetvote(event, function(account){
+                enroll(account.enrollment_id, account.enrollment_secret, function () {
+                    callback(account);
+                }, errorCallback);
+        }
+        , errorCallback);
     },
 
     hash256: function(str){
@@ -50,7 +42,7 @@ module.exports = {
     },
 
     saveDynamoItem: function(table, obj, errorCallback, callback){
-        insertDynamoDoc("ballots", obj, errorCallback, callback);
+        insertDynamoDoc(table, obj, errorCallback, callback);
     },
 
     handleSuccess: function(obj, callback){
@@ -81,6 +73,23 @@ module.exports = {
     }
 };
 
+var initNetvote = function(event, callback, errorCallback) {
+        var apiKey = event.requestContext.identity.apiKey;
+
+        getDyanmoDoc("config", "id", "chaincode", errorCallback, function (data) {
+            CHAINCODE_ID = data.Item.version;
+            CHAIN_HOSTNAME = data.Item.hostname;
+            CHAIN_PORT = data.Item.port;
+            getApiCredentials(apiKey, errorCallback, function (data) {
+                if (data.Item == undefined) {
+                    errorCallback("apiKey not found")
+                } else {
+                    callback(data.Item);
+                }
+            });
+        });
+};
+
 
 var insertDynamoDoc = function(table, obj, errorCallback, callback){
     var params = {
@@ -101,7 +110,7 @@ var insertDynamoDoc = function(table, obj, errorCallback, callback){
 
 
 var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
-    console.log("Enrolling...")
+    console.log("Enrolling..."+enrollmentId);
     var loginBody  = {
         "enrollId": enrollmentId,
         "enrollSecret": enrollmentSecret
@@ -130,7 +139,6 @@ var getDyanmoDoc = function(table, key, value, errorCallback, callback){
 };
 
 var callChaincode = function(method, operation, payload, enrollmentId, callback, errorCallback){
-
     var timeMs = new Date().getTime();
     var randomNumber = Math.floor(Math.random()*100000);
     var correlationId = parseInt(""+timeMs+""+randomNumber);
@@ -190,5 +198,5 @@ var postRequest = function(urlPath, postData, callback, errorCallback){
 };
 
 var getApiCredentials = function(apiKey, errorCallback, callback){
-    getItemFromDyanmoDB("accounts", "api_key", apiKey, errorCallback, callback);
+    getDyanmoDoc("accounts", "api_key", apiKey, errorCallback, callback);
 };

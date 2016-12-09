@@ -1,40 +1,46 @@
-ADMIN_KEY=qyiJBqfcHQaxj7oyTBo9C6vmVBNRGEO172qgDG95
-VOTER_KEY=eIxNknhkOr3bG5uk4HimK5P6cq6A050haN3pi9yu
+HOST=https://0i2c83b9q9.execute-api.us-east-1.amazonaws.com/netvote_dev
+ADMIN_KEY=LqmkaqEpkH63JdmpDi4Ty2ArLRPv65WQ5rM7tAWW
+VOTER_KEY=C1lBXZzwA61rvI1eLZmYh24M4s2Yga675E8woTt7
 
 IDX=`date +%s`
 VOTER_ID="slanders$IDX"
+BALLOT_ID="beercolor-$IDX"
 
 echo $IDX
-
 sed -i.bak "s/IDX/$IDX/g" *.json
 
 echo "ADMIN: CREATING BALLOT"
-./create_ballot.sh $ADMIN_KEY
+curl -X POST -H "x-api-key: $ADMIN_KEY" -H "Content-Type: application/json" --data @ballot.json $HOST/ballot
 echo ""
-sleep 2
+sleep 1
 
 echo "ADMIN: GETTING RESULTS"
-./get_results.sh $ADMIN_KEY $IDX
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
 echo ""
-sleep 2
+sleep 1
 
 echo "getting ballot"
-./get_ballot.sh $VOTER_KEY $VOTER_ID
+curl -s -H "x-api-key: $VOTER_KEY" $HOST/voter/$VOTER_ID/ballot |jq
 echo ""
-sleep 2
+sleep 1
 
 echo "VOTER: REQUEST SMS CODE"
-./request_sms_code.sh $VOTER_KEY
+curl -X POST -H "x-api-key: $VOTER_KEY" -H "Content-Type: application/json" --data @smsrequest.json $HOST/security/code/sms
+echo ""
 echo "ENTER CODE:"
 read code
 
 echo "VOTER: CASTING VOTE"
-./cast_votes.sh $VOTER_KEY $VOTER_ID $code
-sleep 2
+curl -X POST -H "x-api-key: $VOTER_KEY" -H "nv-two-factor-code: $code" -H "Content-Type: application/json" --data @votes.json $HOST/voter/$VOTER_ID/ballot/$BALLOT_ID
+echo ""
+sleep 1
 
 echo "ADMIN: GETTING RESULTS"
-./get_results.sh $ADMIN_KEY $IDX
-sleep 2
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
+echo ""
+sleep 1
 
 mv ballot.json.bak ballot.json
 mv votes.json.bak votes.json
