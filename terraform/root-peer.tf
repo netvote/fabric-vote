@@ -79,22 +79,24 @@ resource "aws_ecs_cluster" "netvote" {
   name = "netvote-fabric"
 }
 
+//TODO: depend on peer for PBFT
 resource "aws_ecs_task_definition" "deployer" {
   family = "deployer"
   container_definitions = "${file("tasks/deployer.json")}"
-  depends_on = ["aws_instance.peer"]
+  depends_on = ["aws_instance.root-peer"]
   volume {
     name = "chaincerts"
     host_path = "/var/deployer/keyvalstore"
   }
 }
 
+//TODO: depend on peer for PBFT
 resource "aws_ecs_service" "deployer" {
   name = "deployer"
   cluster = "${aws_ecs_cluster.netvote.id}"
   task_definition = "${aws_ecs_task_definition.deployer.arn}"
   desired_count = 1
-  depends_on = ["aws_instance.peer"]
+  depends_on = ["aws_instance.root-peer"]
 }
 
 
@@ -108,14 +110,14 @@ resource "aws_ecs_task_definition" "chainapi" {
   }
 }
 
-
+//TODO: depend on peer for PBFT
 resource "aws_ecs_service" "chainapi" {
   name = "chain-api"
   cluster = "${aws_ecs_cluster.netvote.id}"
   task_definition = "${aws_ecs_task_definition.chainapi.arn}"
   desired_count = 1
   iam_role = "${aws_iam_role.ecs_instance_role.arn}"
-  depends_on = ["aws_instance.peer"]
+  depends_on = ["aws_instance.root-peer"]
   load_balancer {
     elb_name = "${aws_elb.chainapi.name}"
     container_name = "chain-api"
@@ -145,7 +147,7 @@ resource "aws_elb" "chainapi" {
 
   health_check {
     healthy_threshold = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 10
     timeout = 20
     target = "TCP:8000"
     interval = 30

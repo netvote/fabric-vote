@@ -42,6 +42,17 @@ curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
 echo ""
 sleep 1
 
+echo "ADMIN: DELETING BALLOT RESULTS"
+curl -s  -X DELETE -H "x-api-key: $ADMIN_KEY" $HOST/ballot/$BALLOT_ID |jq
+echo ""
+sleep 1
+
+echo "ADMIN: GETTING DELETED RESULTS"
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
+echo ""
+sleep 1
+
 mv ballot.json.bak ballot.json
 mv votes.json.bak votes.json
 mv token.json.bak token.json
