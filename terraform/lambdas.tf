@@ -1,7 +1,67 @@
+resource "aws_iam_policy" "lambda_log" {
+  name = "lambda-exec-policy"
+  description = "Allows lambda functions to create log events"
+  policy =  "${file("conf/lambda-log-policy.json")}"
+}
+
+resource "aws_iam_policy" "dynamo_full" {
+  name = "dynamo-policy"
+  description = "Allows access to DynamoDB data"
+  policy =  "${file("conf/dynamo-policy.json")}"
+}
+
+resource "aws_iam_policy" "apigateway_full" {
+  name = "api-gateway-policy"
+  description = "Allows access to modify api keys and usage plans in api gateway"
+  policy =  "${file("conf/api-gateway-admin-policy.json")}"
+}
+
+# API Lambda Permissions
+
+resource "aws_iam_role" "netvote_api_lambda" {
+  name = "netvote-api-lambda"
+  assume_role_policy = "${file("conf/lambda-assume-role-policy.json")}"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_exec_attach" {
+  role = "${aws_iam_role.netvote_api_lambda.name}"
+  policy_arn = "${aws_iam_policy.lambda_log.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "dynamo_attach" {
+  role = "${aws_iam_role.netvote_api_lambda.name}"
+  policy_arn = "${aws_iam_policy.dynamo_full.arn}"
+}
+
+
+# API KEY creation also needs access to API gateway modification
+
+resource "aws_iam_role" "api_key_lambda" {
+  name = "netvote-api-key-lambda"
+  assume_role_policy = "${file("conf/lambda-assume-role-policy.json")}"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_exec_api_key_attach" {
+  role = "${aws_iam_role.api_key_lambda.name}"
+  policy_arn = "${aws_iam_policy.lambda_log.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "dynamo_api_key_attach" {
+  role = "${aws_iam_role.api_key_lambda.name}"
+  policy_arn = "${aws_iam_policy.dynamo_full.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "apigateway_api_key_attach" {
+  role = "${aws_iam_role.api_key_lambda.name}"
+  policy_arn = "${aws_iam_policy.apigateway_full.arn}"
+}
+
+
+//TODO add API KEY usage plan ids to enviornment parameters
 resource "aws_lambda_function" "create_api_key" {
   filename = "lambdas.zip"
   function_name = "create-api-key"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
+  role = "${aws_iam_role.api_key_lambda.arn}"
   handler = "send-sms-code.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
@@ -13,7 +73,7 @@ resource "aws_lambda_function" "create_api_key" {
 resource "aws_lambda_function" "cast_votes" {
   filename = "lambdas.zip"
   function_name = "cast-votes"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
   handler = "cast-votes.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
@@ -32,7 +92,7 @@ resource "aws_lambda_function" "cast_votes" {
 resource "aws_lambda_function" "send_sms_code" {
   filename = "lambdas.zip"
   function_name = "send-sms-code"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
   handler = "send-sms-code.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
@@ -51,7 +111,7 @@ resource "aws_lambda_function" "send_sms_code" {
 resource "aws_lambda_function" "get_results" {
   filename = "lambdas.zip"
   function_name = "get-results"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
   handler = "get-results.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
@@ -70,7 +130,7 @@ resource "aws_lambda_function" "get_results" {
 resource "aws_lambda_function" "create_ballot" {
   filename = "lambdas.zip"
   function_name = "create-ballot"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
   handler = "get-results.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
@@ -87,11 +147,11 @@ resource "aws_lambda_permission" "create_ballot" {
 }
 
 
-resource "aws_lambda_function" "get_ballot" {
+resource "aws_lambda_function" "get_voter_ballot" {
   filename = "lambdas.zip"
-  function_name = "get-ballot"
-  role = "arn:aws:iam::845215180986:role/service-role/lambda-get-ballot"
-  handler = "get-ballot.handler"
+  function_name = "get-voter-ballot"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
+  handler = "get-voter-ballot.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas.zip"))}"
   publish = true

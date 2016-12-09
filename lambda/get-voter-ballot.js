@@ -4,7 +4,7 @@ console.log('Loading function');
 var nvlib = require('netvotelib');
 
 
-//TODO: fix this hack
+//TODO: fix this hack...init ideally has been done prior to this (but when?)
 var getBallot = function(voterId, enrollmentId, callback, errorCallback){
     nvlib.invokeChaincode("init_voter", {Id: voterId}, enrollmentId, function(){
         setTimeout(function() {

@@ -23,6 +23,14 @@ variable "route_53_zone_id" {
   default="ZTO1AJYOEZG73"
 }
 
+variable "region" {
+  type = "string"
+}
+
+variable "account"{
+  type = "string"
+}
+
 provider "aws" {
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
