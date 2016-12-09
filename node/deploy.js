@@ -60,7 +60,8 @@ function deploy(user) {
         chaincodeName: "netvote",
         chaincodePath: "netvote/go/chaincode/",
         fcn: "init",
-        args: []
+        args: [],
+        confidential: true
     };
 
     var tx = user.deploy(deployRequest);
