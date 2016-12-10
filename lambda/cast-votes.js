@@ -55,7 +55,7 @@ exports.handler = function(event, context, callback){
             },
             function (result) {
                 if (result == "success") {
-                    castVotes(enrollmentId, {"VoterId": voterId, "Decisions": votes}, function (result) {
+                    castVotes(enrollmentId, {"BallotId":voterballot.Id, "VoterId": voterId, "Decisions": votes}, function (result) {
                         nvlib.handleSuccess({"result": "success"}, callback)
                     }, function (e) {
                         nvlib.handleError(e, callback);

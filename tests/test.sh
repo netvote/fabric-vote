@@ -39,7 +39,7 @@ read code
 echo "VOTER: CASTING VOTE"
 curl -X POST -H "x-api-key: $VOTER_KEY" -H "nv-two-factor-code: $code" -H "Content-Type: application/json" --data @votes.json $HOST/voter/$VOTER_ID/ballot/$BALLOT_ID
 echo ""
-sleep 1
+sleep 2
 
 echo "ADMIN: GETTING RESULTS"
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq

@@ -32,6 +32,8 @@ const FUNC_INIT_VOTER = "init_voter"
 
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT = "get_ballot"
+const QUERY_GET_DECISIONS = "get_decisions"
+
 
 type VoteChaincode struct {
 }
@@ -39,7 +41,7 @@ type VoteChaincode struct {
 type Option struct {
 	Id string
 	Name string
-	Props map[string]string
+	Attributes map[string]string
 }
 
 type Decision struct {
@@ -47,7 +49,7 @@ type Decision struct {
 	Name              string
 	BallotId          string
 	Options           []Option
-	Props map[string]string
+	Attributes map[string]string
 	ResponsesRequired int
 	RepeatVoteDelayNS int64
 	Repeatable        bool
@@ -75,7 +77,7 @@ type Voter struct {
 	Dimensions []string
 	DecisionIdToVoteCount map[string]int
 	LastVoteTimestampNS int64
-	Props map[string]string
+	Attributes map[string]string
 }
 
 type AccountBallots struct{
@@ -85,6 +87,7 @@ type AccountBallots struct{
 }
 
 type Vote struct {
+	BallotId string
 	VoterId string
 	Decisions []VoterDecision
 }
@@ -93,10 +96,11 @@ type VoterDecision struct {
 	DecisionId string
 	Selections map[string]int
 	Reasons map[string]map[string]string
-	Props map[string]string
+	Attributes map[string]string
 }
 
 type VoteEvent struct {
+	Ballot Ballot
 	Voter Voter
 	Vote Vote
 	AccountId string
@@ -231,7 +235,8 @@ func castVote(stateDao StateDAO, vote Vote){
 	voter.LastVoteTimestampNS = getNow()
 	stateDao.SaveVoter(voter)
 
-	voteEvent := VoteEvent{Vote: vote, Voter: voter}
+	ballot := stateDao.GetBallot(vote.BallotId)
+	voteEvent := VoteEvent{Ballot: ballot, Vote: vote, Voter: voter}
 	stateDao.setVoteEvent(voteEvent)
 }
 
@@ -339,7 +344,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			parseArg(args[0], &ballotDecisions)
 			addBallot(stateDao, ballotDecisions)
 		}
-	}else if function == FUNC_DELETE_BALLOT { //ADD OR UPDATE
+	}else if function == FUNC_DELETE_BALLOT {
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballot_payload Ballot
 			parseArg(args[0], &ballot_payload)
@@ -404,14 +409,33 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			parseArg(args[0], &decisionResults)
 			result, err = json.Marshal(stateDao.GetDecisionResults(decisionResults.Id))
 		}
-	} else if function == QUERY_GET_BALLOT {
+	} else if function == QUERY_GET_DECISIONS {  //GETS ALL Decisions across all ballots
 		if(hasRole(stub, ROLE_VOTER)) {
 			var voter_obj Voter
 			parseArg(args[0], &voter_obj)
 			voter := stateDao.GetVoter(voter_obj.Id)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
-	} else if function == QUERY_GET_ADMIN_BALLOT {
+	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific ballot
+		if(hasRole(stub, ROLE_VOTER)) {
+			var vote_obj Vote
+			parseArg(args[0], &vote_obj)
+			if(vote_obj.BallotId == "" || vote_obj.VoterId == ""){
+				panic("VoterId and BallotId are required")
+			}
+			voter := stateDao.GetVoter(vote_obj.VoterId)
+			decisions := make([]Decision,0)
+			active_decisions := getActiveDecisions(stateDao, voter)
+
+			for _, d := range active_decisions{
+				if(d.BallotId == vote_obj.BallotId) {
+					decisions = append(decisions, d)
+				}
+			}
+
+			result, err = json.Marshal(decisions)
+		}
+	} else if function == QUERY_GET_ADMIN_BALLOT { //TODO: short circuited by dyanmodb currently...perhaps not needed?
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballot_obj Ballot
 			parseArg(args[0], &ballot_obj)

@@ -180,12 +180,6 @@ resource "aws_api_gateway_integration" "get_voter_ballot" {
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_voter_ballot.arn}/invocations"
 }
 
-#######
-#
-#   VOTER CAST VOTE
-#
-####
-
 #/voter/{voterid}/ballot/{ballotid}
 resource "aws_api_gateway_resource" "voter_ballot_by_id" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
@@ -193,7 +187,31 @@ resource "aws_api_gateway_resource" "voter_ballot_by_id" {
   path_part = "{ballotId}"
 }
 
-#GET /voter/{voterid}/ballot
+#GET /voter/{voterid}/ballot/{ballotid}
+resource "aws_api_gateway_method" "get_voter_ballot_by_id" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.voter_ballot_by_id.id}"
+  http_method = "GET"
+  authorization = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "get_voter_ballot_by_id" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.voter_ballot_by_id.id}"
+  http_method = "${aws_api_gateway_method.get_voter_ballot_by_id.http_method}"
+  integration_http_method = "POST"
+  type = "AWS_PROXY"
+  uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_voter_ballot.arn}/invocations"
+}
+
+#######
+#
+#   VOTER CAST VOTE
+#
+####
+
+#POST /voter/{voterid}/ballot/{ballotid}
 resource "aws_api_gateway_method" "cast_ballot_vote" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.voter_ballot_by_id.id}"
