@@ -90,6 +90,7 @@ type Vote struct {
 	BallotId string
 	VoterId string
 	Decisions []VoterDecision
+	Dimensions []string
 }
 
 type VoterDecision struct {
