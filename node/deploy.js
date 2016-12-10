@@ -61,13 +61,12 @@ function deploy(user) {
         chaincodePath: "netvote/go/chaincode/",
         fcn: "init",
         args: [],
-        confidential: true
+        confidential: false
     };
 
     var tx = user.deploy(deployRequest);
     tx.on('complete', function(results) {
-	console.log(results);
-	console.log(JSON.stringify(results));
+        console.log(JSON.stringify(results));
     });
     tx.on('error', function(error) {
         console.log("Failed to deploy chaincode: request=%j, error=%k",deployRequest,error);
