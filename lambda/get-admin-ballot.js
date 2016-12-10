@@ -17,8 +17,12 @@ exports.handler = function(event, context, callback){
                 nvlib.handleError(e, callback)
             },
             function(data){
-                var ballotObj = JSON.parse(new Buffer(data.Item.payload, 'base64').toString("ascii"));
-                nvlib.handleSuccess(ballotObj, callback);
+                if(data == undefined || data.Item == undefined){
+                    nvlib.handleNotFound(callback);
+                }else {
+                    var ballotObj = JSON.parse(new Buffer(data.Item.payload, 'base64').toString("ascii"));
+                    nvlib.handleSuccess(ballotObj, callback);
+                }
             }
         );
 
