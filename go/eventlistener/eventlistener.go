@@ -49,17 +49,14 @@ type NetVoteEvent struct {
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
 func (a *adapter) GetInterestedEvents() ([]*pb.Interest, error) {
-	if a.chaincodeID != "" {
-		return []*pb.Interest{
-			{EventType: pb.EventType_BLOCK},
-			{EventType: pb.EventType_REJECTION},
-			{EventType: pb.EventType_CHAINCODE,
-				RegInfo: &pb.Interest_ChaincodeRegInfo{
-					ChaincodeRegInfo: &pb.ChaincodeReg{
-						ChaincodeID: a.chaincodeID,
-						EventName:   ""}}}}, nil
-	}
-	return []*pb.Interest{{EventType: pb.EventType_BLOCK}, {EventType: pb.EventType_REJECTION}}, nil
+	return []*pb.Interest{
+		{EventType: pb.EventType_BLOCK},
+		{EventType: pb.EventType_REJECTION},
+		{EventType: pb.EventType_CHAINCODE,
+			RegInfo: &pb.Interest_ChaincodeRegInfo{
+				ChaincodeRegInfo: &pb.ChaincodeReg{
+					ChaincodeID: a.chaincodeID,
+					EventName:   ""}}}}, nil
 }
 
 //Recv implements consumer.EventAdapter interface for receiving events
