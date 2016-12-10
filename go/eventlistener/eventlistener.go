@@ -20,7 +20,6 @@ under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -29,6 +28,9 @@ import (
 	"encoding/json"
 	"time"
 )
+
+
+
 
 type adapter struct {
 	notfy              chan *pb.Event_Block
@@ -49,14 +51,15 @@ type NetVoteEvent struct {
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
 func (a *adapter) GetInterestedEvents() ([]*pb.Interest, error) {
-	return []*pb.Interest{
-		{EventType: pb.EventType_BLOCK},
-		{EventType: pb.EventType_REJECTION},
-		{EventType: pb.EventType_CHAINCODE,
-			RegInfo: &pb.Interest_ChaincodeRegInfo{
-				ChaincodeRegInfo: &pb.ChaincodeReg{
-					ChaincodeID: a.chaincodeID,
-					EventName:   ""}}}}, nil
+	if a.chaincodeID != "" {
+		return []*pb.Interest{
+			{EventType: pb.EventType_CHAINCODE,
+				RegInfo: &pb.Interest_ChaincodeRegInfo{
+					ChaincodeRegInfo: &pb.ChaincodeReg{
+						ChaincodeID: a.chaincodeID,
+						EventName:   ""}}}}, nil
+	}
+	return []*pb.Interest{{EventType: pb.EventType_BLOCK}, {EventType: pb.EventType_REJECTION}}, nil
 }
 
 //Recv implements consumer.EventAdapter interface for receiving events
@@ -101,20 +104,22 @@ func createEventClient(eventAddress string, listenToRejections bool, cid string)
 }
 
 func main() {
-	var eventAddress string
-	var listenToRejections bool
-	var chaincodeID string
+	chaincodeID, cidExists := os.LookupEnv("CHAINCODE_ID")
+	eventAddress, eaExists := os.LookupEnv("PEER_HOST")
 
-	flag.StringVar(&eventAddress, "events-address", "root.stevenlanders.net:7053", "address of events server")
-	flag.BoolVar(&listenToRejections, "listen-to-rejections", false, "whether to listen to rejection events")
-
-	//TODO: look up chaincode ID from dynamoDB config
-	flag.StringVar(&chaincodeID, "events-from-chaincode", "c30f70dc7b5633e7a18e7e8660e26f502584a34703288819364e78a8a43be60e", "listen to events from given chaincode")
-	flag.Parse()
+	if(!cidExists){
+		fmt.Println("CHAINCODE_ID env variable is not set")
+		os.Exit(1)
+	}
+	if(!eaExists){
+		fmt.Println("PEER_HOST env variable is not set")
+		os.Exit(1)
+	}
 
 	fmt.Printf("Event Address: %s\n", eventAddress)
+	fmt.Printf("ChaincodeID: %s\n", chaincodeID)
 
-	a := createEventClient(eventAddress, listenToRejections, chaincodeID)
+	a := createEventClient(eventAddress, false, chaincodeID)
 	if a == nil {
 		fmt.Printf("Error creating event client\n")
 		return
@@ -127,18 +132,19 @@ func main() {
 			json.Unmarshal(ce.ChaincodeEvent.Payload, &evt)
 
 			netvoteEvent := NetVoteEvent{
-						AccountId: evt["AccountId"].(string),
-						Payload: string(ce.ChaincodeEvent.Payload),
-						TxId:ce.ChaincodeEvent.TxID,
-						Timestamp: time.Now().UnixNano(),
-						EventName: ce.ChaincodeEvent.EventName,
-						ChaincodeId: ce.ChaincodeEvent.ChaincodeID}
+				AccountId: evt["AccountId"].(string),
+				Payload: string(ce.ChaincodeEvent.Payload),
+				TxId:ce.ChaincodeEvent.TxID,
+				Timestamp: time.Now().UnixNano(),
+				EventName: ce.ChaincodeEvent.EventName,
+				ChaincodeId: ce.ChaincodeEvent.ChaincodeID}
 
 			eventBytes, _ := json.Marshal(netvoteEvent)
 
 			fmt.Printf("\nNETVOTE EVENT:\n"+string(eventBytes)+"\n")
 
-			//TODO: forward event to kinesis
+		//TODO: forward event to kinesis
 		}
 	}
+
 }
