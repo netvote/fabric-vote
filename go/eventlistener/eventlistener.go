@@ -108,7 +108,7 @@ func main() {
 	var listenToRejections bool
 	var chaincodeID string
 
-	flag.StringVar(&eventAddress, "events-address", "peer.stevenlanders.net:7053", "address of events server")
+	flag.StringVar(&eventAddress, "events-address", "root.stevenlanders.net:7053", "address of events server")
 	flag.BoolVar(&listenToRejections, "listen-to-rejections", false, "whether to listen to rejection events")
 
 	//TODO: look up chaincode ID from dynamoDB config
