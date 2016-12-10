@@ -1,11 +1,10 @@
 #!/bin/bash
 
-
-yum -y install unzip
-
 curl -O https://bootstrap.pypa.io/get-pip.py
 
 python27 get-pip.py
+
+pip install awscli
 
 mkdir ~/.aws/
 
