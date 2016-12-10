@@ -16,7 +16,7 @@ variable "docker_ami" {
 }
 
 variable "instance_size" {
-  default="m3.medium"
+  default="m3.large"
 }
 
 variable "route_53_zone_id" {

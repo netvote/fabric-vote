@@ -27,6 +27,9 @@ import (
 	pb "github.com/hyperledger/fabric/protos"
 	"encoding/json"
 	"time"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/kinesis"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 
@@ -106,6 +109,7 @@ func createEventClient(eventAddress string, listenToRejections bool, cid string)
 func main() {
 	chaincodeID, cidExists := os.LookupEnv("CHAINCODE_ID")
 	eventAddress, eaExists := os.LookupEnv("PEER_HOST")
+	streamName, snExists := os.LookupEnv("STREAM_NAME")
 
 	if(!cidExists){
 		fmt.Println("CHAINCODE_ID env variable is not set")
@@ -116,12 +120,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	if(!snExists){
+		fmt.Println("STREAM_NAME env variable is not set, defaulting to votes")
+		streamName = "votes"
+	}
+
+	sess, err := session.NewSession()
+	if err != nil {
+		fmt.Println("failed to create session,", err)
+		return
+	}
+
+	svc := kinesis.New(sess)
+
 	fmt.Printf("Event Address: %s\n", eventAddress)
 	fmt.Printf("ChaincodeID: %s\n", chaincodeID)
 
 	a := createEventClient(eventAddress, false, chaincodeID)
 	if a == nil {
-		fmt.Printf("Error creating event client\n")
+		fmt.Println("Error creating event client")
 		return
 	}
 
@@ -143,7 +160,18 @@ func main() {
 
 			fmt.Printf("\nNETVOTE EVENT:\n"+string(eventBytes)+"\n")
 
-		//TODO: forward event to kinesis
+			params := &kinesis.PutRecordInput{
+				Data:                      eventBytes,
+				PartitionKey:              aws.String(evt["AccountId"].(string)),
+				StreamName:                aws.String(streamName),
+			}
+			resp, err := svc.PutRecord(params)
+
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
+			fmt.Println(resp)
 		}
 	}
 

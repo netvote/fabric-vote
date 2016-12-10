@@ -1,6 +1,6 @@
-HOST=https://te8o85a53a.execute-api.us-east-1.amazonaws.com/netvote_dev
-ADMIN_KEY=5AwZV5nngQ7pkpD8XyTjS7bOXn89MJwS1N47Ubik
-VOTER_KEY=4EJQlq1jrR2nj0ZForttj62ceLuVsGtr4wqg6zIc
+HOST=https://ddmwno0wdi.execute-api.us-east-1.amazonaws.com/netvote_dev
+ADMIN_KEY=ksK0WQJ1hi5UHjVPWkIhd6dxnVEnUkHG47gfxPch
+VOTER_KEY=hRIG5tXjWfaS8GRMauppserU7VRw4js44NvqoDPc
 
 IDX=`date +%s`
 VOTER_ID="slanders$IDX"
@@ -26,7 +26,7 @@ echo ""
 sleep 1
 
 echo "VOTER getting ballot"
-curl -s -H "x-api-key: $VOTER_KEY" $HOST/voter/$VOTER_ID/ballot |jq
+curl -s -H "x-api-key: $VOTER_KEY" $HOST/voter/$VOTER_ID/ballot/$BALLOT_ID |jq
 echo ""
 sleep 1
 

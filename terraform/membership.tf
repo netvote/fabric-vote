@@ -1,6 +1,6 @@
 resource "aws_instance" "membership" {
   ami = "${var.docker_ami}"
-  instance_type = "${var.instance_size}"
+  instance_type = "m3.medium"
   key_name = "netvote-slanders"
 
   tags {

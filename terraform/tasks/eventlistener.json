@@ -7,7 +7,8 @@
     "essential": true,
     "environment" : [
       { "name" : "CHAINCODE_ID", "value" : "4f8f5a9608afda67e4a41073f95425ce045d3f9083be1eae27ae9126a64462a8" },
-      { "name" : "PEER_HOST", "value" : "root.stevenlanders.net:7053" }
+      { "name" : "PEER_HOST", "value" : "root.stevenlanders.net:7053" },
+      { "name" : "AWS_REGION", "value" : "us-east-1" }
     ],
     "command": ["sh", "-c", "cd /root && ./checkout.sh && cd /opt/gopath/src/netvote/go/eventlistener && go run eventlistener.go"]
   }
