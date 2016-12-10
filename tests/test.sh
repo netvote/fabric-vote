@@ -1,6 +1,6 @@
-HOST=https://0i2c83b9q9.execute-api.us-east-1.amazonaws.com/netvote_dev
-ADMIN_KEY=LqmkaqEpkH63JdmpDi4Ty2ArLRPv65WQ5rM7tAWW
-VOTER_KEY=C1lBXZzwA61rvI1eLZmYh24M4s2Yga675E8woTt7
+HOST=https://l0r0a86bf6.execute-api.us-east-1.amazonaws.com/netvote_dev
+ADMIN_KEY=EjP6AbKQtn7WMv5tWaLXA5Wzx5o6Gjmo9fgk4WwQ
+VOTER_KEY=GfpNnF4bK61JONTKY63mN4VlgDo0VI6MarkTTnuQ
 
 IDX=`date +%s`
 VOTER_ID="slanders$IDX"
@@ -11,6 +11,11 @@ sed -i.bak "s/IDX/$IDX/g" *.json
 
 echo "ADMIN: CREATING BALLOT"
 curl -X POST -H "x-api-key: $ADMIN_KEY" -H "Content-Type: application/json" --data @ballot.json $HOST/ballot
+echo ""
+sleep 1
+
+echo "ADMIN: GETTING BALLOT"
+curl -H "x-api-key: $ADMIN_KEY" $HOST/ballot/$BALLOT_ID |jq
 echo ""
 sleep 1
 

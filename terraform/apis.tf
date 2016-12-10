@@ -40,13 +40,37 @@ resource "aws_api_gateway_integration" "create_ballot" {
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.create_ballot.arn}/invocations"
 }
 
-### DELETE
+### {ballotId}
 
 resource "aws_api_gateway_resource" "ballot_by_id" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   parent_id = "${aws_api_gateway_resource.admin_ballot.id}"
   path_part = "{ballotId}"
 }
+
+
+### GET BALLOT
+
+resource "aws_api_gateway_method" "get_admin_ballot" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
+  http_method = "GET"
+  authorization = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "get_admin_ballot" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
+  http_method = "GET"
+  integration_http_method = "POST"
+  type = "AWS_PROXY"
+  uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_admin_ballot.arn}/invocations"
+}
+
+
+
+### DELETE BALLOT
 
 resource "aws_api_gateway_method" "delete_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"

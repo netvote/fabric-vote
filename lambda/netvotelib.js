@@ -67,6 +67,15 @@ module.exports = {
         callback(null, respObj);
     },
 
+    handleNotFound : function(callback){
+        var respObj = {
+            "statusCode": 404,
+            "headers": {},
+            "body": JSON.stringify({"error": "not found"})
+        };
+        callback(null, respObj);
+    },
+
     handleError : function(e, callback){
         var respObj = {
             "statusCode": 500,

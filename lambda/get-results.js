@@ -15,7 +15,12 @@ exports.handler = function(event, context, callback){
 
     nvlib.chainInit(event, context, function(chaincodeUser){
         getResults(chaincodeUser.enrollment_id, decisionId, function(results){
-            nvlib.handleSuccess(JSON.parse(results.result.message), callback);
+            var resultObj = JSON.parse(results.result.message);
+            if(resultObj.Id != ""){
+                nvlib.handleSuccess(resultObj, callback);
+            }else{
+                nvlib.handleNotFound(callback);
+            }
         }, function(e){
             nvlib.handleError(e, callback);
         });

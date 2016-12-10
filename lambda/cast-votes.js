@@ -9,7 +9,7 @@ var castVotes = function(enrollmentId, votes, callback, errorCallback){
 };
 
 var verifyTwoFactor = function(voterBallot, voterId, accountId, twoFactorCode, errorCallback, callback){
-    nvlib.getDynamoItem("ballots", "id", voterBallot.Id, errorCallback, function(data){
+    nvlib.getDynamoItem("ballots", "id", accountId+":"+voterBallot.Id, errorCallback, function(data){
         if(data.Item.requires2FA){
 
             var hashKey = nvlib.hash256(accountId+":"+voterId);
