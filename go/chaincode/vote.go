@@ -411,9 +411,9 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 		}
 	} else if function == QUERY_GET_DECISIONS {  //GETS ALL Decisions across all ballots
 		if(hasRole(stub, ROLE_VOTER)) {
-			var voter_obj Voter
-			parseArg(args[0], &voter_obj)
-			voter := stateDao.GetVoter(voter_obj.Id)
+			var vote_obj Vote
+			parseArg(args[0], &vote_obj)
+			voter := stateDao.GetVoter(vote_obj.VoterId)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
 	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific ballot
