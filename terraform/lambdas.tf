@@ -10,6 +10,13 @@ resource "aws_iam_policy" "dynamo_full" {
   policy =  "${file("conf/dynamo-policy.json")}"
 }
 
+resource "aws_iam_policy" "kinesis_read" {
+  name = "kinesis-read"
+  description = "Allows access to Kinesis stream"
+  policy =  "${file("conf/lambda-kinesis-policy.json")}"
+}
+
+
 resource "aws_iam_policy" "apigateway_full" {
   name = "api-gateway-policy"
   description = "Allows access to modify api keys and usage plans in api gateway"
@@ -31,6 +38,11 @@ resource "aws_iam_role_policy_attachment" "lambda_exec_attach" {
 resource "aws_iam_role_policy_attachment" "dynamo_attach" {
   role = "${aws_iam_role.netvote_api_lambda.name}"
   policy_arn = "${aws_iam_policy.dynamo_full.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "kinesis_attach" {
+  role = "${aws_iam_role.netvote_api_lambda.name}"
+  policy_arn = "${aws_iam_policy.kinesis_read.arn}"
 }
 
 
@@ -218,3 +230,22 @@ resource "aws_lambda_permission" "get_voter_ballot_by_id" {
   source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.get_voter_ballot_by_id.http_method}${aws_api_gateway_resource.voter_ballot_by_id.path}"
 }
 
+resource "aws_lambda_function" "kinesis_logger" {
+  filename = "lambdas.zip"
+  function_name = "vote-kinesis-logger"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
+  handler = "kinesis-logger.handler"
+  runtime = "nodejs4.3"
+  source_code_hash = "${base64sha256(file("lambdas.zip"))}"
+  publish = true
+  timeout = 10
+  description = "TEST: logs the Vote kinesis stream entries to cloudwatch"
+}
+
+resource "aws_lambda_event_source_mapping" "event_source_mapping" {
+  batch_size = 100
+  event_source_arn = "${aws_kinesis_stream.votes.arn}"
+  enabled = true
+  function_name = "${aws_lambda_function.kinesis_logger.arn}"
+  starting_position = "LATEST"
+}
