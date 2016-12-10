@@ -33,8 +33,6 @@ import (
 )
 
 
-
-
 type adapter struct {
 	notfy              chan *pb.Event_Block
 	rejected           chan *pb.Event_Rejection
