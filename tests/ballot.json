@@ -11,17 +11,17 @@
     "Options": [{
       "Id": "red",
       "Name": "The Color Red",
-      "Props": {
+      "Attributes": {
         "key": "value"
       }
     }, {
       "Id": "blue",
       "Name": "The Color Blue",
-      "Props": {
+      "Attributes": {
         "key": "value"
       }
     }],
-    "Props": {
+    "Attributes": {
       "key": "value"
     }
   }, {
@@ -30,17 +30,17 @@
     "Options": [{
       "Id": "ipa",
       "Name": "IPA",
-      "Props": {
+      "Attributes": {
         "key": "value"
       }
     }, {
       "Id": "pils",
       "Name": "Pilsner",
-      "Props": {
+      "Attributes": {
         "key": "value"
       }
     }],
-    "Props": {
+    "Attributes": {
       "key": "value"
     },
     "ResponsesRequired": 2,
