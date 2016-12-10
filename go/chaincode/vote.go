@@ -31,6 +31,7 @@ const FUNC_CAST_VOTES = "cast_votes"
 const FUNC_INIT_VOTER = "init_voter"
 
 const QUERY_GET_RESULTS = "get_results"
+const QUERY_GET_BALLOT_RESULTS = "get_ballot_results"
 const QUERY_GET_BALLOT = "get_ballot"
 const QUERY_GET_DECISIONS = "get_decisions"
 
@@ -65,6 +66,11 @@ type Ballot struct{
 type BallotDecisions struct{
 	Ballot Ballot
 	Decisions []Decision
+}
+
+type BallotResults struct {
+	Id string
+	Results map[string]DecisionResults
 }
 
 type DecisionResults struct{
@@ -409,6 +415,21 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			var decisionResults DecisionResults
 			parseArg(args[0], &decisionResults)
 			result, err = json.Marshal(stateDao.GetDecisionResults(decisionResults.Id))
+		}
+	}
+	if function == QUERY_GET_BALLOT_RESULTS {
+		if(hasRole(stub, ROLE_ADMIN)) {
+			var ballotPayload Ballot
+			parseArg(args[0], &ballotPayload)
+			ballot := stateDao.GetBallot(ballotPayload.Id)
+
+			resultsMap := make(map[string]DecisionResults)
+			for _, decisionId := range ballot.Decisions{
+				resultsMap[decisionId] = stateDao.GetDecisionResults(decisionId)
+			}
+
+			ballotResults := BallotResults { Id: ballot.Id, Results: resultsMap }
+			result, err = json.Marshal(ballotResults)
 		}
 	} else if function == QUERY_GET_DECISIONS {  //GETS ALL Decisions across all ballots
 		if(hasRole(stub, ROLE_VOTER)) {

@@ -9,6 +9,9 @@ import (
 )
 
 const CREATE_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"}}`
+const CREATE_DECISION2_JSON = `{"Id":"test-id2","Name":"What is your other decision?","BallotId":"transaction-id","Options":[{"Id":"b","Name":"B","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"}}`
+
+
 const TEST_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}`
 
 const CREATE_DECISION_JSON_BALLOT2 = `{"Id":"test-id2","Name":"What is your decision?","BallotId":"otherballot","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"}}`
@@ -361,6 +364,31 @@ func TestVoteChaincode_Query_Decision(t *testing.T) {
 	checkInvoke(t, stub, "add_decision", []string{TEST_DECISION_JSON})
 
 	checkQuery(t, stub, "get_results", []string{`{"Id":"test-id"}`}, `{"Id":"test-id","Results":{}}`)
+}
+
+func TestVoteChaincode_Invoke_QueryBallotResults(t *testing.T){
+	mockEnv()
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-ballot")
+
+	checkInvokeTX(t, stub,  "transaction-id", "add_ballot",
+		[]string{`{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016"}, "Decisions":[`+CREATE_DECISION_JSON+`,`+CREATE_DECISION2_JSON+`]}`})
+
+	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id","test-id2"],"Private":false}`)
+	checkState(t, stub, "test/DECISION/test-id", TEST_DECISION_JSON)
+	checkState(t, stub, "test/RESULTS/test-id", `{"Id":"test-id","Results":{}}`)
+
+	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
+
+	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
+
+	checkState(t, stub, "test/RESULTS/test-id", `{"Id":"test-id","Results":{"ALL":{"a":1}}}`)
+
+	checkQuery(t, stub, "get_results", []string{`{"Id":"test-id"}`}, `{"Id":"test-id","Results":{"ALL":{"a":1}}}`)
+	checkQuery(t, stub, "get_ballot_results", []string{`{"Id":"transaction-id"}`}, `{"Id":"transaction-id","Results":{"test-id":{"Id":"test-id","Results":{"ALL":{"a":1}}},"test-id2":{"Id":"test-id2","Results":{}}}}`)
 }
 
 func TestVoteChaincode_Invoke_ValidateCastTooMany(t *testing.T) {
