@@ -1,0 +1,10 @@
+[
+  {
+    "name": "eventlistener",
+    "image": "845215180986.dkr.ecr.us-east-1.amazonaws.com/netvote/chain-api",
+    "cpu": 10,
+    "memory": 512,
+    "essential": true,
+    "command": ["sh", "-c", "cd /root && ./init.sh && cd /opt/gopath/src/netvote/go/eventlistener && go run eventlistener.go"]
+  }
+]

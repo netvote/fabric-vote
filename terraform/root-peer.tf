@@ -99,6 +99,21 @@ resource "aws_ecs_service" "deployer" {
   depends_on = ["aws_instance.root-peer"]
 }
 
+//TODO: depend on peer for PBFT
+resource "aws_ecs_task_definition" "eventlistener" {
+  family = "eventlistener"
+  container_definitions = "${file("tasks/eventlistener.json")}"
+  depends_on = ["aws_instance.root-peer"]
+}
+
+//TODO: depend on peer for PBFT
+resource "aws_ecs_service" "eventlistener" {
+  name = "eventlistener"
+  cluster = "${aws_ecs_cluster.netvote.id}"
+  task_definition = "${aws_ecs_task_definition.eventlistener.arn}"
+  desired_count = 1
+  depends_on = ["aws_instance.root-peer"]
+}
 
 resource "aws_ecs_task_definition" "chainapi" {
   family = "chain-api"
