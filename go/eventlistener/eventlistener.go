@@ -42,58 +42,58 @@ type adapter struct {
 }
 
 type NetVoteEvent struct {
-	VoteEvent VoteEvent `json:"vote"`
-	AccountId string `json:"accountId"`
-	ChaincodeId string `json:"chaincodeId"`
-	EventName string `json:"eventName"`
-	TxId string `json:"txId"`
-	Timestamp int64 `json:"timestamp"`
+	VoteEvent VoteEvent
+	AccountId string
+	ChaincodeId string
+	EventName string
+	TxId string
+	Timestamp int64
 }
 
 type Ballot struct{
-	Id string `json:"id"`
-	Name string `json:"name"`
-	Decisions []string `json:"decisions"`
-	Private bool `json:"private"`
+	Id string
+	Name string
+	Decisions []string
+	Private bool
 }
 
 type Option struct {
-	Id string `json:"id"`
-	Name string `json:"name"`
-	Attributes map[string]string `json:"attributes"`
+	Id string
+	Name string
+	Attributes map[string]string
 }
 
 type Decision struct {
-	Id                string `json:"id"`
-	Name              string `json:"name"`
-	BallotId          string `json:"ballotId"`
-	Options           []Option `json:"options"`
-	Attributes map[string]string `json:"attributes"`
-	ResponsesRequired int `json:"responsesRequired"`
-	RepeatVoteDelayNS int64 `json:"repeatVoteDelayNS"`
-	Repeatable        bool `json:"repeatable"`
+	Id                string
+	Name              string
+	BallotId          string
+	Options           []Option
+	Attributes map[string]string
+	ResponsesRequired int
+	RepeatVoteDelayNS int64
+	Repeatable        bool
 }
 
 type VoterDecision struct {
-	DecisionId string `json:"decisionId"`
-	Selections map[string]int `json:"selections"`
-	Reasons map[string]map[string]string `json:"reasons"`
-	Attributes map[string]string `json:"attributes"`
+	DecisionId string
+	Selections map[string]int
+	Reasons map[string]map[string]string
+	Attributes map[string]string
 }
 
 type BallotDecisions struct{
-	Ballot Ballot `json:"ballot"`
-	Decisions []Decision `json:"decisions"`
+	Ballot Ballot
+	Decisions []Decision
 }
 
 type VoteEvent struct {
-	Ballot BallotDecisions `json:"ballotDecisions"`
-	VoterDimensions []string `json:"voterDimensions"`
-	VoterAttributes map[string]string `json:"voterAttributes"`
-	VoteDecisions []VoterDecision `json:"voteDecisions"`
-	VoteDimensions []string `json:"voteDimensions"`
-	VoteAttributes map[string]string `json:"voteAttributes"`
-	AccountId string `json:"accountId"`
+	Ballot BallotDecisions
+	VoterDimensions []string
+	VoterAttributes map[string]string
+	VoteDecisions []VoterDecision
+	VoteDimensions []string
+	VoteAttributes map[string]string
+	AccountId string
 }
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
