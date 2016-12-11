@@ -97,6 +97,7 @@ type Vote struct {
 	VoterId string
 	Decisions []VoterDecision
 	Dimensions []string
+	Attributes map[string]string
 }
 
 type VoterDecision struct {
@@ -106,10 +107,14 @@ type VoterDecision struct {
 	Attributes map[string]string
 }
 
+//NOTE: must match structure in eventlistener.go
 type VoteEvent struct {
-	Ballot Ballot
-	Voter Voter
-	Vote Vote
+	Ballot BallotDecisions
+	VoterDimensions []string
+	VoterAttributes map[string]string
+	VoteDecisions []VoterDecision
+	VoteDimensions []string
+	VoteAttributes map[string]string
 	AccountId string
 }
 
@@ -242,8 +247,16 @@ func castVote(stateDao StateDAO, vote Vote){
 	voter.LastVoteTimestampNS = getNow()
 	stateDao.SaveVoter(voter)
 
-	ballot := stateDao.GetBallot(vote.BallotId)
-	voteEvent := VoteEvent{Ballot: ballot, Vote: vote, Voter: voter}
+	ballot := stateDao.GetBallotDecisions(vote.BallotId)
+	voteEvent := VoteEvent{
+			Ballot: ballot,
+			VoteDimensions: vote.Dimensions,
+			VoteDecisions: vote.Decisions,
+			VoteAttributes: vote.Attributes,
+			VoterAttributes: voter.Attributes,
+			VoterDimensions: voter.Dimensions,
+	}
+
 	stateDao.setVoteEvent(voteEvent)
 }
 
@@ -588,6 +601,18 @@ func (t *StateDAO) GetBallot(ballotId string)(Ballot){
 	var b Ballot
 	t.getState(TYPE_BALLOT, ballotId, &b)
 	return b
+}
+
+func (t *StateDAO) GetBallotDecisions(ballotId string)(BallotDecisions){
+	ballot := t.GetBallot(ballotId)
+
+	bDecisions := make([]Decision,0)
+	for _, decisionId := range ballot.Decisions{
+		d := t.GetDecision(decisionId)
+		bDecisions = append(bDecisions, d)
+	}
+
+	return BallotDecisions { Ballot: ballot, Decisions: bDecisions }
 }
 
 func (t *StateDAO) GetAccountBallots()(AccountBallots){

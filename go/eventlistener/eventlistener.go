@@ -42,12 +42,58 @@ type adapter struct {
 }
 
 type NetVoteEvent struct {
-	Payload string `json:"payload"`
+	VoteEvent VoteEvent `json:"vote"`
 	AccountId string `json:"accountId"`
 	ChaincodeId string `json:"chaincodeId"`
 	EventName string `json:"eventName"`
 	TxId string `json:"txId"`
 	Timestamp int64 `json:"timestamp"`
+}
+
+type Ballot struct{
+	Id string `json:"id"`
+	Name string `json:"name"`
+	Decisions []string `json:"decisions"`
+	Private bool `json:"private"`
+}
+
+type Option struct {
+	Id string `json:"id"`
+	Name string `json:"name"`
+	Attributes map[string]string `json:"attributes"`
+}
+
+type Decision struct {
+	Id                string `json:"id"`
+	Name              string `json:"name"`
+	BallotId          string `json:"ballotId"`
+	Options           []Option `json:"options"`
+	Attributes map[string]string `json:"attributes"`
+	ResponsesRequired int `json:"responsesRequired"`
+	RepeatVoteDelayNS int64 `json:"repeatVoteDelayNS"`
+	Repeatable        bool `json:"repeatable"`
+}
+
+type VoterDecision struct {
+	DecisionId string `json:"decisionId"`
+	Selections map[string]int `json:"selections"`
+	Reasons map[string]map[string]string `json:"reasons"`
+	Attributes map[string]string `json:"attributes"`
+}
+
+type BallotDecisions struct{
+	Ballot Ballot `json:"ballot"`
+	Decisions []Decision `json:"decisions"`
+}
+
+type VoteEvent struct {
+	Ballot BallotDecisions `json:"ballotDecisions"`
+	VoterDimensions []string `json:"voterDimensions"`
+	VoterAttributes map[string]string `json:"voterAttributes"`
+	VoteDecisions []VoterDecision `json:"voteDecisions"`
+	VoteDimensions []string `json:"voteDimensions"`
+	VoteAttributes map[string]string `json:"voteAttributes"`
+	AccountId string `json:"accountId"`
 }
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
@@ -146,11 +192,16 @@ func main() {
 			var evt map[string]interface{}
 			json.Unmarshal(ce.ChaincodeEvent.Payload, &evt)
 
+			var vote VoteEvent
+			json.Unmarshal(ce.ChaincodeEvent.Payload, vote)
+
+			nowTime := time.Now().UnixNano()
+
 			netvoteEvent := NetVoteEvent{
 				AccountId: evt["AccountId"].(string),
-				Payload: string(ce.ChaincodeEvent.Payload),
+				VoteEvent: vote,
 				TxId:ce.ChaincodeEvent.TxID,
-				Timestamp: time.Now().UnixNano(),
+				Timestamp: nowTime,
 				EventName: ce.ChaincodeEvent.EventName,
 				ChaincodeId: ce.ChaincodeEvent.ChaincodeID}
 
@@ -162,6 +213,7 @@ func main() {
 				Data:                      eventBytes,
 				PartitionKey:              aws.String(evt["AccountId"].(string)),
 				StreamName:                aws.String(streamName),
+				SequenceNumberForOrdering: string(nowTime),
 			}
 			resp, err := svc.PutRecord(params)
 
