@@ -188,11 +188,15 @@ func main() {
 	for {
 		select {
 		case ce := <-a.cEvent:
+
+			fmt.Printf("\nEVENT BYTES:\n"+string(ce.ChaincodeEvent.Payload)+"\n")
+
+
 			var evt map[string]interface{}
 			json.Unmarshal(ce.ChaincodeEvent.Payload, &evt)
 
 			var vote VoteEvent
-			json.Unmarshal(ce.ChaincodeEvent.Payload, vote)
+			json.Unmarshal(ce.ChaincodeEvent.Payload, &vote)
 
 			nowTime := time.Now().UnixNano()
 

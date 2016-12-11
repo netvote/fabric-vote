@@ -127,6 +127,12 @@ func stringInSlice(a string, list []Option) bool {
 
 func validate(stateDao StateDAO, vote Vote){
 	var voter = stateDao.GetVoter(vote.VoterId)
+
+	if(vote.BallotId == ""){
+		//TODO: for now, this is required
+		panic("BallotId is required")
+	}
+
 	for _, decision := range vote.Decisions {
 		d := stateDao.GetDecision(decision.DecisionId)
 		if(voter.DecisionIdToVoteCount == nil) {
@@ -371,9 +377,9 @@ func allocateVotesToVoter(stateDao StateDAO, voter Voter)([]Decision){
 	return result
 }
 
-func printJson(value interface{}){
+func printJson(msg string, value interface{}){
 	result, _:=  json.Marshal(value)
-	log(string(result))
+	log(msg+":"+string(result))
 }
 
 func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []string) (result []byte, err error){
@@ -557,6 +563,7 @@ func (t *StateDAO) setVoteEvent(voteEvent VoteEvent){
 	if err != nil {
 		panic("Invalid JSON while setting event")
 	}
+	printJson("EVENT",voteEvent)
 	t.Stub.SetEvent("VOTE", json_bytes)
 }
 
