@@ -34,7 +34,7 @@ resource "aws_api_gateway_method" "create_ballot" {
 resource "aws_api_gateway_integration" "create_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot.id}"
-  http_method = "POST"
+  http_method = "${aws_api_gateway_method.create_ballot.http_method}"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.create_ballot.arn}/invocations"
@@ -62,7 +62,7 @@ resource "aws_api_gateway_method" "get_admin_ballot" {
 resource "aws_api_gateway_integration" "get_admin_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
-  http_method = "GET"
+  http_method = "${aws_api_gateway_method.get_admin_ballot.http_method}"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_admin_ballot.arn}/invocations"
@@ -83,7 +83,7 @@ resource "aws_api_gateway_method" "delete_ballot" {
 resource "aws_api_gateway_integration" "delete_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.ballot_by_id.id}"
-  http_method = "DELETE"
+  http_method = "${aws_api_gateway_method.delete_ballot.http_method}"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.delete_ballot.arn}/invocations"
@@ -127,7 +127,7 @@ resource "aws_api_gateway_method" "smscode" {
 resource "aws_api_gateway_integration" "smscode" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.smscode.id}"
-  http_method = "POST"
+  http_method = "${aws_api_gateway_method.smscode.http_method}"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.send_sms_code.arn}/invocations"
