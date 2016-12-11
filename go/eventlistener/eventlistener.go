@@ -199,6 +199,7 @@ func main() {
 			json.Unmarshal(ce.ChaincodeEvent.Payload, &vote)
 
 			nowTime := time.Now().UnixNano()
+			vote.Timestamp = nowTime
 
 			netvoteEvent := NetVoteEvent{
 				AccountId: evt["AccountId"].(string),
