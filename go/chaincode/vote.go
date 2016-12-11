@@ -111,7 +111,7 @@ type VoterDecision struct {
 type VoteEvent struct {
 	Ballot BallotDecisions
 	Dimensions []string
-	Attributes map[string]string
+	VoterAttributes map[string]string
 	VoteDecisions []VoterDecision
 	AccountId string
 }

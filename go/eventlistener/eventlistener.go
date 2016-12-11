@@ -85,10 +85,11 @@ type BallotDecisions struct{
 	Decisions []Decision
 }
 
+//must match structure in vote.go
 type VoteEvent struct {
 	Ballot BallotDecisions
 	Dimensions []string
-	Attributes map[string]string
+	VoterAttributes map[string]string
 	VoteDecisions []VoterDecision
 	AccountId string
 	Timestamp int64
