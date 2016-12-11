@@ -142,6 +142,26 @@ resource "aws_lambda_permission" "get_results" {
   source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.get_decision_results.http_method}${aws_api_gateway_resource.get_decision_results_for_id.path}"
 }
 
+resource "aws_lambda_function" "get_ballot_results" {
+  filename = "lambdas.zip"
+  function_name = "get-ballot-results"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
+  handler = "get-ballot-results.handler"
+  runtime = "nodejs4.3"
+  source_code_hash = "${base64sha256(file("lambdas.zip"))}"
+  publish = true
+  timeout = 10
+  description = "ADMIN: gets results for a ballot"
+}
+
+resource "aws_lambda_permission" "get_ballot_results" {
+  function_name = "${aws_lambda_function.get_ballot_results.function_name}"
+  statement_id = "AllowExecutionFromApiGateway"
+  action = "lambda:InvokeFunction"
+  principal = "apigateway.amazonaws.com"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.get_ballot_results.http_method}${aws_api_gateway_resource.get_ballot_results_for_id.path}"
+}
+
 resource "aws_lambda_function" "create_ballot" {
   filename = "lambdas.zip"
   function_name = "create-ballot"

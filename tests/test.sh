@@ -1,6 +1,6 @@
-HOST=https://ddmwno0wdi.execute-api.us-east-1.amazonaws.com/netvote_dev
-ADMIN_KEY=ksK0WQJ1hi5UHjVPWkIhd6dxnVEnUkHG47gfxPch
-VOTER_KEY=hRIG5tXjWfaS8GRMauppserU7VRw4js44NvqoDPc
+HOST=https://sn4se06goa.execute-api.us-east-1.amazonaws.com/netvote_dev
+ADMIN_KEY=3xoYZZ6OXG7jKetUbu82PaZikqKkFNPu5niehW0t
+VOTER_KEY=pVJmagsMkA1SvwvCTDr1Q5dpsKzaAbdL9cBR4pUG
 
 IDX=`date +%s`
 VOTER_ID="slanders$IDX"
@@ -10,16 +10,21 @@ echo $IDX
 sed -i.bak "s/IDX/$IDX/g" *.json
 
 echo "ADMIN: CREATING BALLOT"
-curl -X POST -H "x-api-key: $ADMIN_KEY" -H "Content-Type: application/json" --data @ballot.json $HOST/ballot
+curl -s -X POST -H "x-api-key: $ADMIN_KEY" -H "Content-Type: application/json" --data @ballot.json $HOST/ballot
 echo ""
 sleep 1
 
 echo "ADMIN: GETTING BALLOT"
-curl -H "x-api-key: $ADMIN_KEY" $HOST/ballot/$BALLOT_ID |jq
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/ballot/$BALLOT_ID |jq
 echo ""
 sleep 1
 
-echo "ADMIN: GETTING RESULTS"
+echo "ADMIN: GETTING BALLOT RESULTS"
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/ballot/$BALLOT_ID |jq
+echo ""
+sleep 1
+
+echo "ADMIN: GETTING DECISION RESULTS"
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
 echo ""
@@ -41,9 +46,14 @@ curl -X POST -H "x-api-key: $VOTER_KEY" -H "nv-two-factor-code: $code" -H "Conte
 echo ""
 sleep 2
 
-echo "ADMIN: GETTING RESULTS"
+echo "ADMIN: GETTING DECISION RESULTS"
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
+echo ""
+sleep 1
+
+echo "ADMIN: GETTING BALLOT RESULTS"
+curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/ballot/$BALLOT_ID |jq
 echo ""
 sleep 1
 

@@ -288,7 +288,7 @@ func castVote(stateDao StateDAO, vote Vote){
 			Ballot: ballot,
 			Dimensions: dimensions,
 			VoteDecisions: vote.Decisions,
-			Attributes: attributes,
+			VoterAttributes: attributes,
 	}
 
 	stateDao.setVoteEvent(voteEvent)
