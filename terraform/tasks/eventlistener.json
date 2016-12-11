@@ -6,7 +6,7 @@
     "memory": 512,
     "essential": true,
     "environment" : [
-      { "name" : "CHAINCODE_ID", "value" : "295edc811cfc49463372cf052b22a7ff0c8bdb4fbf4ebe177b88f6504aa7d6e2" },
+      { "name" : "CHAINCODE_ID", "value" : "bdff03279d192b36aa777e17c626e7934e72b022df6d432f7f445975a5cc5595" },
       { "name" : "PEER_HOST", "value" : "root.stevenlanders.net:7053" },
       { "name" : "AWS_REGION", "value" : "us-east-1" }
     ],
