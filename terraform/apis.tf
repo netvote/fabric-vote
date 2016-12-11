@@ -299,7 +299,6 @@ resource "aws_api_gateway_method" "get_ballot_results" {
   api_key_required = true
 }
 
-
 resource "aws_api_gateway_integration" "get_ballot_results" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
   resource_id = "${aws_api_gateway_resource.get_ballot_results_for_id.id}"

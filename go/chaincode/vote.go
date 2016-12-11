@@ -508,17 +508,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 		if(hasRole(stub, ROLE_ADMIN)) {
 			var ballot_obj Ballot
 			parseArg(args[0], &ballot_obj)
-
-			ballot := stateDao.GetBallot(ballot_obj.Id)
-
-			bDecisions := make([]Decision,0)
-			for _, decisionId := range ballot.Decisions{
-				d := stateDao.GetDecision(decisionId)
-				bDecisions = append(bDecisions, d)
-			}
-
-			bd := BallotDecisions { Ballot: ballot, Decisions: bDecisions }
-			result, err = json.Marshal(bd)
+			result, err = json.Marshal(stateDao.GetBallotDecisions(ballot_obj.Id))
 		}
 	}
 	return
