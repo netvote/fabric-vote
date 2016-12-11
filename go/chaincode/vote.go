@@ -23,7 +23,6 @@ const ROLE_VOTER = "voter"
 // function names
 const QUERY_GET_ADMIN_BALLOT = "get_admin_ballot";
 
-const FUNC_ADD_DECISION = "add_decision"
 const FUNC_ADD_VOTER = "add_voter"
 const FUNC_ADD_BALLOT = "add_ballot"
 const FUNC_DELETE_BALLOT = "delete_ballot"
@@ -78,10 +77,11 @@ type DecisionResults struct{
 	Results map[string]map[string]int
 }
 
+
 type Voter struct {
 	Id string
 	Dimensions []string
-	DecisionIdToVoteCount map[string]int
+	DecisionIdToVoteCount map[string]map[string]int
 	LastVoteTimestampNS int64
 	Attributes map[string]string
 }
@@ -134,7 +134,7 @@ func validate(stateDao StateDAO, vote Vote){
 	}
 
 	for _, decision := range vote.Decisions {
-		d := stateDao.GetDecision(decision.DecisionId)
+		d := stateDao.GetDecision(vote.BallotId, decision.DecisionId)
 		if(voter.DecisionIdToVoteCount == nil) {
 			panic("This voter has no votes")
 		}
@@ -150,7 +150,7 @@ func validate(stateDao StateDAO, vote Vote){
 		for _, sel := range decision.Selections{
 			total += sel
 		}
-		if(total != voter.DecisionIdToVoteCount[decision.DecisionId]){
+		if(total != voter.DecisionIdToVoteCount[vote.BallotId][decision.DecisionId]){
 			panic("Values must add up to exactly ResponsesRequired")
 		}
 
@@ -168,22 +168,25 @@ func alreadyVoted(voter Voter, decision Decision)(bool){
 
 func addBallotDecisionsToVoter(stateDao StateDAO, ballot Ballot, voter *Voter, save bool){
 	for _, decisionId := range ballot.Decisions {
-		decision := stateDao.GetDecision(decisionId)
-		addDecisionToVoter(voter, decision)
+		decision := stateDao.GetDecision(ballot.Id,decisionId)
+		addDecisionToVoter(ballot.Id, voter, decision)
 	}
 	if(save) {
 		stateDao.SaveVoter(*voter)
 	}
 }
 
-func addDecisionToVoter(voter *Voter, decision Decision){
-	if _, exists := voter.DecisionIdToVoteCount[decision.Id]; exists {
+func addDecisionToVoter(ballotId string, voter *Voter, decision Decision){
+	if(voter.DecisionIdToVoteCount == nil){
+		voter.DecisionIdToVoteCount = make(map[string]map[string]int)
+	}
+	if(voter.DecisionIdToVoteCount[ballotId] == nil){
+		voter.DecisionIdToVoteCount[ballotId] = make(map[string]int)
+	}
+	if _, exists := voter.DecisionIdToVoteCount[ballotId][decision.Id]; exists {
 		//already allocated for this, skip
 	}else{
-		if(voter.DecisionIdToVoteCount == nil){
-			voter.DecisionIdToVoteCount = make(map[string]int)
-		}
-		voter.DecisionIdToVoteCount[decision.Id] = decision.ResponsesRequired
+		voter.DecisionIdToVoteCount[ballotId][decision.Id] = decision.ResponsesRequired
 	}
 }
 
@@ -258,8 +261,8 @@ func castVote(stateDao StateDAO, vote Vote){
 
 	for _, voter_decision := range vote.Decisions {
 
-		decisionResults := stateDao.GetDecisionResults(voter_decision.DecisionId)
-		decision := stateDao.GetDecision(voter_decision.DecisionId)
+		decisionResults := stateDao.GetDecisionResults(vote.BallotId, voter_decision.DecisionId)
+		decision := stateDao.GetDecision(vote.BallotId, voter_decision.DecisionId)
 
 		for selection, vote_count := range voter_decision.Selections {
 			if(nil == decisionResults.Results[DIMENSION_ALL]){
@@ -270,7 +273,7 @@ func castVote(stateDao StateDAO, vote Vote){
 			decisionResults.Results[DIMENSION_ALL][selection] += vote_count
 			//if not repeatable, remove votes from voter
 			if(!decision.Repeatable){
-				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
+				voter.DecisionIdToVoteCount[vote.BallotId][voter_decision.DecisionId] -= vote_count
 			}
 
 			for _, dimension := range dimensions {
@@ -284,7 +287,7 @@ func castVote(stateDao StateDAO, vote Vote){
 
 	}
 	for _, d := range results_array {
-		stateDao.SaveDecisionResults(d)
+		stateDao.SaveDecisionResults(vote.BallotId, d)
 	}
 	voter.LastVoteTimestampNS = getNow()
 	stateDao.SaveVoter(voter)
@@ -326,9 +329,12 @@ func addDecisionToChain(stateDao StateDAO, decision Decision) ([]byte){
 	if(decision.ResponsesRequired == 0) {
 		decision.ResponsesRequired = 1
 	}
+	if(decision.BallotId == ""){
+		panic("ballotId is required for decision")
+	}
 	results := DecisionResults { Id: decision.Id, Results: make(map[string]map[string]int)}
 	stateDao.SaveDecision(decision)
-	stateDao.SaveDecisionResults(results)
+	stateDao.SaveDecisionResults(decision.BallotId, results)
 	return nil
 }
 
@@ -341,7 +347,7 @@ func addDecision(stateDao StateDAO, decision Decision){
 
 func addVoter(stateDao StateDAO, voter Voter){
 	if(voter.DecisionIdToVoteCount == nil){
-		voter.DecisionIdToVoteCount = make(map[string]int)
+		voter.DecisionIdToVoteCount = make(map[string]map[string]int)
 	}
 	if(voter.Dimensions == nil){
 		voter.Dimensions = []string{}
@@ -391,13 +397,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 	}()
 
 	stateDao := StateDAO{Stub: stub}
-	if function == FUNC_ADD_DECISION { //TODO: may not actually be a thing
-		if(hasRole(stub, ROLE_ADMIN)) {
-			var decision Decision
-			parseArg(args[0], &decision)
-			addDecision(stateDao, decision)
-		}
-	} else if function == FUNC_ADD_BALLOT {
+	if function == FUNC_ADD_BALLOT {
 		//ADD OR UPDATE
 		if (hasRole(stub, ROLE_ADMIN)) {
 			var ballotDecisions BallotDecisions
@@ -411,7 +411,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 
 			ballot := stateDao.GetBallot(ballot_payload.Id)
 			for _, decisionId := range ballot.Decisions{
-				stateDao.DeleteDecision(decisionId)
+				stateDao.DeleteDecision(ballot.Id, decisionId)
 			}
 			stateDao.DeleteBallot(ballot.Id)
 		}
@@ -442,11 +442,14 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 
 func getActiveDecisions(stateDao StateDAO, voter Voter)([]Decision){
 	result := make([]Decision, 0)
-	for k,_ := range voter.DecisionIdToVoteCount{
-		if(voter.DecisionIdToVoteCount[k] > 0){
-			decision := stateDao.GetDecision(k)
-			if(!decision.Repeatable || !alreadyVoted(voter, decision)){
-				result = append(result, decision)
+	for ballotId,_ := range voter.DecisionIdToVoteCount {
+		decisionIdMap := voter.DecisionIdToVoteCount[ballotId]
+		for decisionId, _ := range decisionIdMap {
+			if (decisionIdMap[decisionId] > 0) {
+				decision := stateDao.GetDecision(ballotId, decisionId)
+				if (!decision.Repeatable || !alreadyVoted(voter, decision)) {
+					result = append(result, decision)
+				}
 			}
 		}
 	}
@@ -465,9 +468,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 
 	if function == QUERY_GET_RESULTS {
 		if(hasRole(stub, ROLE_ADMIN)) {
-			var decisionResults DecisionResults
-			parseArg(args[0], &decisionResults)
-			result, err = json.Marshal(stateDao.GetDecisionResults(decisionResults.Id))
+			panic("not supported")
 		}
 	}
 	if function == QUERY_GET_BALLOT_RESULTS {
@@ -478,7 +479,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 
 			resultsMap := make(map[string]DecisionResults)
 			for _, decisionId := range ballot.Decisions{
-				resultsMap[decisionId] = stateDao.GetDecisionResults(decisionId)
+				resultsMap[decisionId] = stateDao.GetDecisionResults(ballot.Id, decisionId)
 			}
 
 			ballotResults := BallotResults { Id: ballot.Id, Results: resultsMap }
@@ -599,15 +600,15 @@ func (t *StateDAO) getState(objectType string, id string, value interface{}){
 	json.Unmarshal(config, &value)
 }
 
-func (t *StateDAO) GetDecision(decisionId string) (Decision){
+func (t *StateDAO) GetDecision(ballotId string, decisionId string) (Decision){
 	var d Decision
-	t.getState(TYPE_DECISION, decisionId, &d)
+	t.getState(TYPE_DECISION, ballotId+"/"+decisionId, &d)
 	return d
 }
 
-func (t *StateDAO) GetDecisionResults(decisionId string) (DecisionResults){
+func (t *StateDAO) GetDecisionResults(ballotId string, decisionId string) (DecisionResults){
 	var d DecisionResults
-	t.getState(TYPE_RESULTS, decisionId, &d)
+	t.getState(TYPE_RESULTS, ballotId+"/"+decisionId, &d)
 	return d
 }
 
@@ -618,9 +619,9 @@ func (t *StateDAO) GetVoter(voterId string) (Voter) {
 }
 
 
-func (t *StateDAO) DeleteDecision(decisionId string){
-	t.deleteState(TYPE_RESULTS, decisionId);
-	t.deleteState(TYPE_DECISION, decisionId);
+func (t *StateDAO) DeleteDecision(ballotId, decisionId string){
+	t.deleteState(TYPE_RESULTS, ballotId+"/"+decisionId);
+	t.deleteState(TYPE_DECISION, ballotId+"/"+decisionId);
 }
 
 func (t *StateDAO) DeleteBallot(ballotId string){
@@ -639,7 +640,7 @@ func (t *StateDAO) GetBallotDecisions(ballotId string)(BallotDecisions){
 
 	bDecisions := make([]Decision,0)
 	for _, decisionId := range ballot.Decisions{
-		d := t.GetDecision(decisionId)
+		d := t.GetDecision(ballotId, decisionId)
 		bDecisions = append(bDecisions, d)
 	}
 
@@ -687,8 +688,8 @@ func (t *StateDAO) addToAccountBallots(ballot Ballot){
 }
 
 
-func (t *StateDAO) SaveDecisionResults(decision DecisionResults){
-	t.saveState(TYPE_RESULTS, decision.Id, decision)
+func (t *StateDAO) SaveDecisionResults(ballotId string, decision DecisionResults){
+	t.saveState(TYPE_RESULTS, ballotId+"/"+decision.Id, decision)
 }
 
 func (t *StateDAO) SaveBallot(ballot Ballot){
@@ -701,5 +702,5 @@ func (t *StateDAO) SaveVoter(v Voter){
 }
 
 func (t *StateDAO) SaveDecision(decision Decision){
-	t.saveState(TYPE_DECISION, decision.Id, decision)
+	t.saveState(TYPE_DECISION, decision.BallotId+"/"+decision.Id, decision)
 }
