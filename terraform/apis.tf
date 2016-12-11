@@ -245,38 +245,6 @@ resource "aws_api_gateway_resource" "get_results" {
   path_part = "results"
 }
 
-#/results/decision/
-resource "aws_api_gateway_resource" "get_decision_results" {
-  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  parent_id = "${aws_api_gateway_resource.get_results.id}"
-  path_part = "decision"
-}
-
-#GET /results/decision/{decisionid}
-resource "aws_api_gateway_resource" "get_decision_results_for_id" {
-  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  parent_id = "${aws_api_gateway_resource.get_decision_results.id}"
-  path_part = "{decisionId}"
-}
-
-
-resource "aws_api_gateway_method" "get_decision_results" {
-  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  resource_id = "${aws_api_gateway_resource.get_decision_results_for_id.id}"
-  http_method = "GET"
-  authorization = "NONE"
-  api_key_required = true
-}
-
-resource "aws_api_gateway_integration" "get_decision_results" {
-  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  resource_id = "${aws_api_gateway_resource.get_decision_results_for_id.id}"
-  http_method = "${aws_api_gateway_method.get_decision_results.http_method}"
-  integration_http_method = "POST"
-  type = "AWS_PROXY"
-  uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_results.arn}/invocations"
-}
-
 #/results/ballot/
 resource "aws_api_gateway_resource" "get_ballot_results" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"

@@ -24,12 +24,6 @@ curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/ballot/$BALLOT_ID |jq
 echo ""
 sleep 1
 
-echo "ADMIN: GETTING DECISION RESULTS"
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
-echo ""
-sleep 1
-
 echo "VOTER getting ballot"
 curl -s -H "x-api-key: $VOTER_KEY" $HOST/voter/$VOTER_ID/ballot/$BALLOT_ID |jq
 echo ""
@@ -46,12 +40,6 @@ curl -X POST -H "x-api-key: $VOTER_KEY" -H "nv-two-factor-code: $code" -H "Conte
 echo ""
 sleep 2
 
-echo "ADMIN: GETTING DECISION RESULTS"
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
-echo ""
-sleep 1
-
 echo "ADMIN: GETTING BALLOT RESULTS"
 curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/ballot/$BALLOT_ID |jq
 echo ""
@@ -59,12 +47,6 @@ sleep 1
 
 echo "ADMIN: DELETING BALLOT RESULTS"
 curl -s  -X DELETE -H "x-api-key: $ADMIN_KEY" $HOST/ballot/$BALLOT_ID |jq
-echo ""
-sleep 1
-
-echo "ADMIN: GETTING DELETED RESULTS"
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-color$IDX |jq
-curl -s -H "x-api-key: $ADMIN_KEY" $HOST/results/decision/favorite-beer$IDX |jq
 echo ""
 sleep 1
 
