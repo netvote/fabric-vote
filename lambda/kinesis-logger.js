@@ -7,7 +7,8 @@ exports.handler = (event, context, callback) => {
     event.Records.forEach((record) => {
         // Kinesis data is base64 encoded so decode here
         const payload = new Buffer(record.kinesis.data, 'base64').toString('ascii');
-        console.log('Decoded payload:', payload);
+        var voteEvent = JSON.parse(payload)
+        console.log('Decoded payload:', JSON.stringify(voteEvent));
     });
     callback(null, `Successfully processed ${event.Records.length} records.`);
 };
