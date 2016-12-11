@@ -97,7 +97,7 @@ type Vote struct {
 	VoterId string
 	Decisions []VoterDecision
 	Dimensions []string
-	Attributes map[string]string
+	VoterAttributes map[string]string
 }
 
 type VoterDecision struct {
@@ -110,11 +110,9 @@ type VoterDecision struct {
 //NOTE: must match structure in eventlistener.go
 type VoteEvent struct {
 	Ballot BallotDecisions
-	VoterDimensions []string
-	VoterAttributes map[string]string
+	Dimensions []string
+	Attributes map[string]string
 	VoteDecisions []VoterDecision
-	VoteDimensions []string
-	VoteAttributes map[string]string
 	AccountId string
 }
 
@@ -209,10 +207,48 @@ func log(message string){
 	fmt.Printf("NETVOTE LOG: %s\n", message)
 }
 
+func getDimensionsForVote(voter Voter, vote Vote)([]string){
+	dimensions := make([]string, 0)
+	dimension_map := make(map[string]bool)
+	if(voter.Dimensions != nil){
+		for _,i := range voter.Dimensions {
+			dimension_map[i] = true
+		}
+	}
+	if(vote.Dimensions != nil){
+		for _,i := range vote.Dimensions {
+			dimension_map[i] = true
+		}
+	}
+	for k,_ := range dimension_map{
+		dimensions = append(dimensions, k)
+	}
+	return dimensions
+}
+
+func getAttributesForVote(voter Voter, vote Vote)(map[string]string){
+	attributes := make(map[string]string)
+	if(voter.Attributes != nil) {
+		for k, v := range voter.Attributes {
+			attributes[k] = v
+		}
+	}
+
+	if(vote.VoterAttributes != nil) {
+		for k, v := range vote.VoterAttributes {
+			attributes[k] = v
+		}
+	}
+	return attributes
+}
+
 func castVote(stateDao StateDAO, vote Vote){
 	validate(stateDao, vote)
 	voter := stateDao.GetVoter(vote.VoterId)
 	results_array := make([]DecisionResults, 0)
+
+	dimensions := getDimensionsForVote(voter, vote)
+	attributes := getAttributesForVote(voter, vote)
 
 	for _, voter_decision := range vote.Decisions {
 
@@ -231,7 +267,7 @@ func castVote(stateDao StateDAO, vote Vote){
 				voter.DecisionIdToVoteCount[voter_decision.DecisionId] -= vote_count
 			}
 
-			for _, dimension := range voter.Dimensions {
+			for _, dimension := range dimensions {
 				if(nil == decisionResults.Results[dimension]){
 					decisionResults.Results[dimension] = map[string]int{selection: 0}
 				}
@@ -250,11 +286,9 @@ func castVote(stateDao StateDAO, vote Vote){
 	ballot := stateDao.GetBallotDecisions(vote.BallotId)
 	voteEvent := VoteEvent{
 			Ballot: ballot,
-			VoteDimensions: vote.Dimensions,
+			Dimensions: dimensions,
 			VoteDecisions: vote.Decisions,
-			VoteAttributes: vote.Attributes,
-			VoterAttributes: voter.Attributes,
-			VoterDimensions: voter.Dimensions,
+			Attributes: attributes,
 	}
 
 	stateDao.setVoteEvent(voteEvent)

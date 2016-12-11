@@ -53,7 +53,6 @@ type NetVoteEvent struct {
 type Ballot struct{
 	Id string
 	Name string
-	Decisions []string
 	Private bool
 }
 
@@ -88,12 +87,11 @@ type BallotDecisions struct{
 
 type VoteEvent struct {
 	Ballot BallotDecisions
-	VoterDimensions []string
-	VoterAttributes map[string]string
+	Dimensions []string
+	Attributes map[string]string
 	VoteDecisions []VoterDecision
-	VoteDimensions []string
-	VoteAttributes map[string]string
 	AccountId string
+	Timestamp int64
 }
 
 //GetInterestedEvents implements consumer.EventAdapter interface for registering interested events
