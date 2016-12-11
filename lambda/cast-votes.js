@@ -9,7 +9,7 @@ var castVotes = function(enrollmentId, votes, callback, errorCallback){
 };
 
 var verifyTwoFactor = function(voterBallot, voterId, accountId, twoFactorCode, errorCallback, callback){
-    nvlib.getDynamoItem("ballots", "id", accountId+":"+voterBallot.Id, errorCallback, function(data){
+    nvlib.getDynamoItem("ballots", "id", accountId+":"+voterBallot.BallotId, errorCallback, function(data){
         if(data.Item.requires2FA){
 
             var hashKey = nvlib.hash256(accountId+":"+voterId);
@@ -40,9 +40,12 @@ exports.handler = function(event, context, callback){
     console.log('Received context:', JSON.stringify(context, null, 2));
 
     var voterId = event.pathParameters.voterId;
+    var ballotId = event.pathParameters.ballotId;
     var twoFactorCode = event.headers["nv-two-factor-code"];
     var voterballot = JSON.parse(event.body);
-    var votes = voterballot.VoterBallot;
+
+    voterballot["VoterId"] = voterId;
+    voterballot["BallotId"] = ballotId;
 
     nvlib.chainInit(event, context, function(chaincodeUser) {
 
@@ -55,7 +58,7 @@ exports.handler = function(event, context, callback){
             },
             function (result) {
                 if (result == "success") {
-                    castVotes(enrollmentId, {"BallotId":voterballot.Id, "VoterId": voterId, "Decisions": votes}, function (result) {
+                    castVotes(enrollmentId, voterballot, function (result) {
                         nvlib.handleSuccess({"result": "success"}, callback)
                     }, function (e) {
                         nvlib.handleError(e, callback);

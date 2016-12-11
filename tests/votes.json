@@ -1,6 +1,9 @@
 {
-  "Id": "beercolor-IDX",
-  "VoterBallot": [
+  "Dimensions": ["Leader","Engineering","UI"],
+  "VoterAttributes": {
+    "haircolor": "brown"
+  },
+  "Decisions": [
     {
       "DecisionId": "favorite-colorIDX",
       "Selections": {
