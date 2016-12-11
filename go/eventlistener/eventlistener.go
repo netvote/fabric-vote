@@ -212,7 +212,6 @@ func main() {
 				Data:                      eventBytes,
 				PartitionKey:              aws.String(evt["AccountId"].(string)),
 				StreamName:                aws.String(streamName),
-				SequenceNumberForOrdering:  aws.String(string(nowTime)),
 			}
 			resp, err := svc.PutRecord(params)
 
