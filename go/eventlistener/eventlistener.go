@@ -85,7 +85,7 @@ type BallotDecisions struct{
 	Decisions []Decision
 }
 
-//must match structure in vote.go
+//must match structure in vote.go...this is for marshalling
 type VoteEvent struct {
 	Ballot BallotDecisions
 	Dimensions []string
