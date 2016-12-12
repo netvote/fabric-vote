@@ -59,7 +59,6 @@ type Ballot struct{
 	Id string
 	Name string
 	Decisions []string
-	Private bool
 }
 
 type BallotDecisions struct{
@@ -89,7 +88,6 @@ type Voter struct {
 type AccountBallots struct{
 	Id string
 	PublicBallotIds map[string]bool
-	PrivateBallotIds map[string]bool
 }
 
 type Vote struct {
@@ -379,7 +377,6 @@ func allocateVotesToVoter(stateDao StateDAO, voter Voter)([]Decision){
 		addBallotDecisionsToVoter(stateDao, ballot, &voter, false)
 	}
 	stateDao.SaveVoter(voter)
-	//TODO: allocate private ballots if criteira is met
 	return result
 }
 
@@ -667,7 +664,6 @@ func (t *StateDAO) saveState(objectType string, id string, object interface{}){
 func (t *StateDAO) removeBallotFromAccountBallots(ballotId string){
 	accountBallots := t.GetAccountBallots()
 	delete(accountBallots.PublicBallotIds, ballotId)
-	delete(accountBallots.PrivateBallotIds, ballotId)
 	t.saveState(TYPE_ACCOUNT_BALLOTS, accountBallots.Id, accountBallots)
 }
 
@@ -675,15 +671,9 @@ func (t *StateDAO) addToAccountBallots(ballot Ballot){
 	accountBallots := t.GetAccountBallots()
 	account_id := t.getAccountId()
 	if(accountBallots.Id != account_id){
-		accountBallots = AccountBallots{Id: account_id, PrivateBallotIds: make(map[string]bool), PublicBallotIds: make(map[string]bool)}
+		accountBallots = AccountBallots{Id: account_id, PublicBallotIds: make(map[string]bool)}
 	}
-	if(ballot.Private){
-		accountBallots.PrivateBallotIds[ballot.Id] = true
-		delete(accountBallots.PublicBallotIds, ballot.Id)
-	}else{
-		accountBallots.PublicBallotIds[ballot.Id] = true
-		delete(accountBallots.PrivateBallotIds, ballot.Id)
-	}
+	accountBallots.PublicBallotIds[ballot.Id] = true
 	t.saveState(TYPE_ACCOUNT_BALLOTS, account_id, accountBallots)
 }
 
