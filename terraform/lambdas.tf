@@ -162,6 +162,26 @@ resource "aws_lambda_permission" "create_ballot" {
   source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.create_ballot.http_method}${aws_api_gateway_resource.admin_ballot.path}"
 }
 
+resource "aws_lambda_function" "get_account_ballots" {
+  filename = "lambdas.zip"
+  function_name = "get-account-ballots"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
+  handler = "get-account-ballots.handler"
+  runtime = "nodejs4.3"
+  source_code_hash = "${base64sha256(file("lambdas.zip"))}"
+  publish = true
+  timeout = 10
+  description = "ADMIN: gets all ballots from DynamoDB for current account"
+}
+
+resource "aws_lambda_permission" "get_account_ballots" {
+  function_name = "${aws_lambda_function.get_account_ballots.function_name}"
+  statement_id = "AllowExecutionFromApiGateway"
+  action = "lambda:InvokeFunction"
+  principal = "apigateway.amazonaws.com"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.get_account_ballots.http_method}${aws_api_gateway_resource.admin_ballot.path}"
+}
+
 resource "aws_lambda_function" "get_admin_ballot" {
   filename = "lambdas.zip"
   function_name = "get-admin-ballot"

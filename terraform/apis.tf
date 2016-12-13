@@ -40,6 +40,23 @@ resource "aws_api_gateway_integration" "create_ballot" {
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.create_ballot.arn}/invocations"
 }
 
+resource "aws_api_gateway_method" "get_account_ballots" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.admin_ballot.id}"
+  http_method = "GET"
+  authorization = "NONE"
+  api_key_required = true
+}
+
+resource "aws_api_gateway_integration" "get_account_ballots" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
+  resource_id = "${aws_api_gateway_resource.admin_ballot.id}"
+  http_method = "${aws_api_gateway_method.get_account_ballots.http_method}"
+  integration_http_method = "POST"
+  type = "AWS_PROXY"
+  uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.get_account_ballots.arn}/invocations"
+}
+
 ### {ballotId}
 
 resource "aws_api_gateway_resource" "ballot_by_id" {
