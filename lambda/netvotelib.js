@@ -153,6 +153,23 @@ var enroll = function(enrollmentId, enrollmentSecret, callback, errorCallback){
 };
 
 
+var queryDynamoDocs = function(table, key, value, errorCallback, callback){
+    var params = {
+        TableName: table,
+        IndexName: key+"-index",
+        KeyConditions: [ dynamo.Condition(key, "EQ", value) ]
+    };
+
+    dynamo.query(params, function(err, data) {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+            errorCallback(err);
+        } else{
+            callback(data);
+        }
+    });
+};
+
 
 var getDyanmoDoc = function(table, key, value, errorCallback, callback){
     var params = {

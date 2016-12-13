@@ -9,7 +9,8 @@ var createBallot = function(accountId, enrollmentId, ballot, callback, errorCall
         var obj = {
             "id": accountId+":"+ballot.Ballot.Id,
             "payload": new Buffer(JSON.stringify(ballot)).toString("base64"),
-            "requires2FA": (true === ballot.Ballot["Requires2FA"])
+            "requires2FA": (true === ballot.Ballot["Requires2FA"]),
+            "accountId": accountId
         };
         nvlib.saveDynamoItem("ballots", obj, errorCallback, callback);
     }, errorCallback);
