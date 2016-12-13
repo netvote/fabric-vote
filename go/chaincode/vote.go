@@ -33,6 +33,7 @@ const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT_RESULTS = "get_ballot_results"
 const QUERY_GET_BALLOT = "get_ballot"
 const QUERY_GET_DECISIONS = "get_decisions"
+const QUERY_GET_ACCOUNT_BALLOTS = "get_account_ballots"
 
 
 type VoteChaincode struct {
@@ -489,7 +490,11 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			voter := stateDao.GetVoter(vote_obj.VoterId)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
-	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific ballot
+	} else if function == QUERY_GET_ACCOUNT_BALLOTS {  //GETS ALL Decisions across all ballots
+		if(hasRole(stub, ROLE_ADMIN)) {
+			result, err = json.Marshal(stateDao.GetAccountBallots())
+		}
+	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific VOTER ballot
 		if(hasRole(stub, ROLE_VOTER)) {
 			var vote_obj Vote
 			parseArg(args[0], &vote_obj)
