@@ -25,9 +25,9 @@ exports.handler = function(event, context, callback){
     var voterId = event.pathParameters.voterId;
     var ballotId = event.pathParameters.ballotId;
 
-    nvlib.chainInit(event, context, function(chaincodeUser){
+    nvlib.chainInit(event, context, function(account){
 
-        getBallot(voterId, ballotId, chaincodeUser.enrollment_id, function(ballot){
+        getBallot(voterId, ballotId, account.enrollment_id, function(ballot){
             //result.message is returned as string.  Parsing so handleSuccess can stringify without quotes
             nvlib.handleSuccess(JSON.parse(ballot.result.message), callback);
         }, function(e){
