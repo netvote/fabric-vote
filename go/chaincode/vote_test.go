@@ -141,9 +141,18 @@ func TestVoteChaincode_Invoke_AddPrivateBallotWithDecisions(t *testing.T) {
 	checkInvokeTX(t, stub, "transaction-id", "add_ballot",
 		[]string{`{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016","Private": true}, "Decisions":[` + CREATE_DECISION_JSON + `]}`})
 
+	checkInvokeTX(t, stub,  "transaction-id2", "add_ballot",
+		[]string{`{"Ballot":{"Id":"transaction-id2","Name":"Nov 8, 2016"}, "Decisions":[`+CREATE_DECISION_JSON+`]}`})
+
+
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
 
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+
+	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id2","Voter":{"Id":"slanders"}}`})
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+
+
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
