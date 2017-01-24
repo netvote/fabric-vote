@@ -89,6 +89,12 @@ module.exports = {
 var initNetvote = function(event, callback, errorCallback) {
         var apiKey = event.requestContext.identity.apiKey;
 
+        if(event.requestContext.authorizer != undefined) {
+            account["user"] = event.requestContext.authorizer.claims.sub;
+        }else{
+            account["user"] = "UNKNOWN";
+        }
+
         getDyanmoDoc("config", "id", "chaincode", errorCallback, function (data) {
             CHAINCODE_ID = data.Item.version;
             CHAIN_HOSTNAME = data.Item.hostname;

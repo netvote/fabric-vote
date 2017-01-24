@@ -7,7 +7,6 @@ var http = require('http');
 var aws = require('aws-sdk');
 
 var ADMIN_USAGE_PLAN = "a2i576";
-var VOTER_USAGE_PLAN = "458o87";
 
 var provisionAPI = function(enrollmentId, secret, usagePlanId, callback, errorCallback){
     var apigateway = new aws.APIGateway();
@@ -124,22 +123,17 @@ exports.handler = function(event, context, callback){
     createAccount(function(creds){
         console.log("create api account success: "+JSON.stringify(creds));
 
-        createApiKey(creds.voter, VOTER_USAGE_PLAN, function(){
-            console.log("create api voter success");
-
-            createApiKey(creds.admin, ADMIN_USAGE_PLAN, function(){
-                console.log("create api admin success");
-                callback(null, {
-                    "statusCode": 200,
-                    "headers": {},
-                    "body": "success"
-                });
-            }, function(err){
-                handleError(err, callback);
+        createApiKey(creds.admin, ADMIN_USAGE_PLAN, function(){
+            console.log("create api admin success");
+            callback(null, {
+                "statusCode": 200,
+                "headers": {},
+                "body": "success"
             });
         }, function(err){
             handleError(err, callback);
         });
+
     }, function(err){
         handleError(err, callback);
     });
