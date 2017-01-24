@@ -151,6 +151,22 @@ func TestVoteChaincode_Invoke_AddPrivateBallotWithDecisions(t *testing.T) {
 
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id2","Voter":{"Id":"slanders"}}`})
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+
+	// check double assignment has no effect
+	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+
+	// check casting works
+	mockTime(100)
+
+	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":100,"Attributes":null}`)
+
+	// check subsequent assignment has no effect
+	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":100,"Attributes":null}`)
+
+
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
