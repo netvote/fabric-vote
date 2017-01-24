@@ -130,6 +130,22 @@ func checkQuery(t *testing.T, stub *shim.MockStub, function string, args []strin
 	}
 }
 
+func TestVoteChaincode_Invoke_AddPrivateBallotWithDecisions(t *testing.T) {
+	mockEnv()
+	scc := new(VoteChaincode)
+
+	stub := shim.NewMockStub("vote", scc)
+
+	stub.MockTransactionStart("test-invoke-add-ballot")
+
+	checkInvokeTX(t, stub, "transaction-id", "add_ballot",
+		[]string{`{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016","Private": true}, "Decisions":[` + CREATE_DECISION_JSON + `]}`})
+
+	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
+
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+}
+
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 	mockEnv()
 	scc := new(VoteChaincode)

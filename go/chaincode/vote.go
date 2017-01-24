@@ -28,6 +28,7 @@ const FUNC_ADD_BALLOT = "add_ballot"
 const FUNC_DELETE_BALLOT = "delete_ballot"
 const FUNC_CAST_VOTES = "cast_votes"
 const FUNC_INIT_VOTER = "init_voter"
+const FUNC_ASSIGN_BALLOT = "assign_ballot"
 
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT_RESULTS = "get_ballot_results"
@@ -60,6 +61,7 @@ type Ballot struct{
 	Id string
 	Name string
 	Decisions []string
+	Private bool
 }
 
 type BallotDecisions struct{
@@ -89,6 +91,12 @@ type Voter struct {
 type AccountBallots struct{
 	Id string
 	PublicBallotIds map[string]bool
+	PrivateBallotIds map[string]bool
+}
+
+type BallotAssignment struct {
+	BallotId string
+	Voter Voter
 }
 
 type Vote struct {
@@ -426,6 +434,14 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			voter = lazyInitVoter(stateDao, voter)
 			allocateVotesToVoter(stateDao, voter)
 		}
+	} else if function == FUNC_ASSIGN_BALLOT {
+		if(hasRole(stub, ROLE_VOTER)){
+			var ballotAssignment BallotAssignment
+			parseArg(args[0], &ballotAssignment)
+			voter := lazyInitVoter(stateDao, ballotAssignment.Voter)
+			ballot := stateDao.GetBallot(ballotAssignment.BallotId)
+			addBallotDecisionsToVoter(stateDao, ballot, &voter, true)
+		}
 	} else if function == FUNC_CAST_VOTES {
 		if(hasRole(stub, ROLE_VOTER)) {
 			var vote Vote
@@ -676,9 +692,15 @@ func (t *StateDAO) addToAccountBallots(ballot Ballot){
 	accountBallots := t.GetAccountBallots()
 	account_id := t.getAccountId()
 	if(accountBallots.Id != account_id){
-		accountBallots = AccountBallots{Id: account_id, PublicBallotIds: make(map[string]bool)}
+		accountBallots = AccountBallots{Id: account_id, PublicBallotIds: make(map[string]bool), PrivateBallotIds: make(map[string]bool)}
 	}
-	accountBallots.PublicBallotIds[ballot.Id] = true
+	if(ballot.Private == true){
+		accountBallots.PrivateBallotIds[ballot.Id] = true
+		delete(accountBallots.PublicBallotIds, ballot.Id)
+	}else {
+		accountBallots.PublicBallotIds[ballot.Id] = true
+		delete(accountBallots.PrivateBallotIds, ballot.Id)
+	}
 	t.saveState(TYPE_ACCOUNT_BALLOTS, account_id, accountBallots)
 }
 
