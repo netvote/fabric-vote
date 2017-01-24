@@ -151,8 +151,6 @@ func TestVoteChaincode_Invoke_AddPrivateBallotWithDecisions(t *testing.T) {
 
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id2","Voter":{"Id":"slanders"}}`})
 	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
-
-
 }
 
 func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
