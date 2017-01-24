@@ -18,7 +18,6 @@ const DIMENSION_ALL = "ALL"
 const ATTRIBUTE_ROLE = "role"
 
 const ROLE_ADMIN = "admin"
-const ROLE_VOTER = "voter"
 
 // function names
 const QUERY_GET_ADMIN_BALLOT = "get_admin_ballot";
@@ -428,14 +427,14 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			addVoter(stateDao, voter)
 		}
 	} else if function == FUNC_INIT_VOTER {
-		if(hasRole(stub, ROLE_VOTER)) {
+		if(hasRole(stub, ROLE_ADMIN)) {
 			var voter Voter
 			parseArg(args[0], &voter)
 			voter = lazyInitVoter(stateDao, voter)
 			allocateVotesToVoter(stateDao, voter)
 		}
 	} else if function == FUNC_ASSIGN_BALLOT {
-		if(hasRole(stub, ROLE_VOTER)){
+		if(hasRole(stub, ROLE_ADMIN)){
 			var ballotAssignment BallotAssignment
 			parseArg(args[0], &ballotAssignment)
 			voter := lazyInitVoter(stateDao, ballotAssignment.Voter)
@@ -443,7 +442,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			addBallotDecisionsToVoter(stateDao, ballot, &voter, true)
 		}
 	} else if function == FUNC_CAST_VOTES {
-		if(hasRole(stub, ROLE_VOTER)) {
+		if(hasRole(stub, ROLE_ADMIN)) {
 			var vote Vote
 			parseArg(args[0], &vote)
 			castVote(stateDao, vote)
@@ -500,7 +499,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			result, err = json.Marshal(ballotResults)
 		}
 	} else if function == QUERY_GET_DECISIONS {  //GETS ALL Decisions across all ballots
-		if(hasRole(stub, ROLE_VOTER)) {
+		if(hasRole(stub, ROLE_ADMIN)) {
 			var vote_obj Vote
 			parseArg(args[0], &vote_obj)
 			voter := stateDao.GetVoter(vote_obj.VoterId)
@@ -511,7 +510,7 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			result, err = json.Marshal(stateDao.GetAccountBallots())
 		}
 	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific VOTER ballot
-		if(hasRole(stub, ROLE_VOTER)) {
+		if(hasRole(stub, ROLE_ADMIN)) {
 			var vote_obj Vote
 			parseArg(args[0], &vote_obj)
 			if(vote_obj.BallotId == "" || vote_obj.VoterId == ""){
