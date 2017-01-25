@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 	"strconv"
+	"sort"
 )
 
 //TODO: if blockchains are multi-elections, will need scoping by 'election'
@@ -32,6 +33,7 @@ const FUNC_ASSIGN_BALLOT = "assign_ballot"
 const QUERY_GET_RESULTS = "get_results"
 const QUERY_GET_BALLOT_RESULTS = "get_ballot_results"
 const QUERY_GET_BALLOT = "get_ballot"
+const QUERY_GET_VOTER_BALLOTS = "get_voter_ballots"
 const QUERY_GET_DECISIONS = "get_decisions"
 const QUERY_GET_ACCOUNT_BALLOTS = "get_account_ballots"
 
@@ -505,9 +507,37 @@ func handleQuery(stub shim.ChaincodeStubInterface, function string, args []strin
 			voter := stateDao.GetVoter(vote_obj.VoterId)
 			result, err = json.Marshal(getActiveDecisions(stateDao, voter))
 		}
-	} else if function == QUERY_GET_ACCOUNT_BALLOTS {  //GETS ALL Decisions across all ballots
-		if(hasRole(stub, ROLE_ADMIN)) {
+	} else if function == QUERY_GET_ACCOUNT_BALLOTS {
+		//GETS ALL Decisions across all ballots
+		if (hasRole(stub, ROLE_ADMIN)) {
 			result, err = json.Marshal(stateDao.GetAccountBallots())
+		}
+	} else if function == QUERY_GET_VOTER_BALLOTS {
+		if (hasRole(stub, ROLE_ADMIN)) {
+			var voter_obj Voter
+			parseArg(args[0], &voter_obj)
+			if (voter_obj.Id == "") {
+				panic("VoterId and BallotId are required")
+			}
+			voter := stateDao.GetVoter(voter_obj.Id)
+			active_decisions := getActiveDecisions(stateDao, voter)
+
+			ballotIdMap := make(map[string]bool)
+			for _, d := range active_decisions {
+				ballotIdMap[d.BallotId] = true
+			}
+
+			ballotIds := make([]string, 0)
+			for ballotId, _ := range ballotIdMap {
+				ballotIds = append(ballotIds, ballotId)
+			}
+			sort.Strings(ballotIds) //or else order will be non-deterministic
+
+			ballots := make([]Ballot, 0)
+			for _, ballotId := range ballotIds {
+				ballots = append(ballots, stateDao.GetBallot(ballotId))
+			}
+			result, err = json.Marshal(ballots)
 		}
 	} else if function == QUERY_GET_BALLOT {  //GETS decisions for a specific VOTER ballot
 		if(hasRole(stub, ROLE_ADMIN)) {
