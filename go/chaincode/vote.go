@@ -63,6 +63,7 @@ type Ballot struct{
 	Name string
 	Decisions []string
 	Private bool
+	Attributes map[string]string
 }
 
 type BallotDecisions struct{
