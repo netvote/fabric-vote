@@ -9,7 +9,7 @@ var getBallots = function(voterId, enrollmentId, callback, errorCallback){
     nvlib.queryChaincode(operation, {Id: voterId}, enrollmentId, callback, errorCallback);
 };
 
-exports.getVoterBallots = function(event, context, callback){
+exports.handler = function(event, context, callback){
     console.log('Received event:', JSON.stringify(event, null, 2));
     console.log('Received context:', JSON.stringify(context, null, 2));
 

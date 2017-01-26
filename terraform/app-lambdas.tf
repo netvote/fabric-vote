@@ -56,7 +56,7 @@ resource "aws_lambda_permission" "admin_create_ballot" {
   statement_id = "AllowExecutionFromApiGateway"
   action = "lambda:InvokeFunction"
   principal = "apigateway.amazonaws.com"
-  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.admin_create_ballot.http_method}${aws_api_gateway_resource.admin_ballot.path}"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.admin_create_ballot.http_method}${aws_api_gateway_resource.admin_ballot_list.path}"
 }
 
 resource "aws_lambda_function" "admin_get_ballots" {
@@ -76,7 +76,7 @@ resource "aws_lambda_permission" "admin_get_ballot_list" {
   statement_id = "AllowExecutionFromApiGateway"
   action = "lambda:InvokeFunction"
   principal = "apigateway.amazonaws.com"
-  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.admin_get_ballots.http_method}${aws_api_gateway_resource.admin_ballot.path}"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.admin_get_ballots.http_method}${aws_api_gateway_resource.admin_ballot_list.path}"
 }
 
 resource "aws_lambda_function" "admin_update_ballot" {
@@ -163,7 +163,7 @@ resource "aws_lambda_function" "voter_get_ballots" {
   filename = "lambdas-app.zip"
   function_name = "voter-get-ballots"
   role = "${aws_iam_role.netvote_api_lambda.arn}"
-  handler = "voter-get-ballot.handler"
+  handler = "voter-get-ballots.handler"
   runtime = "nodejs4.3"
   source_code_hash = "${base64sha256(file("lambdas-app.zip"))}"
   publish = true

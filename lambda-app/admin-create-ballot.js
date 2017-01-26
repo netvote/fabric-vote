@@ -26,6 +26,11 @@ exports.handler = function(event, context, callback){
 
     //generate ID
     ballot.Ballot["Id"] = uuidV4();
+    ballot.Ballot["Private"] = true;
+
+    for(var i=0; i<ballot.Decisions.length; i++){
+        ballot.Decisions[i]["Id"] = uuidV4();
+    }
 
     nvlib.chainInit(event, context, function(account) {
         createBallot(account, ballot, function () {

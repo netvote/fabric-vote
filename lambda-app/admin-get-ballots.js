@@ -9,7 +9,7 @@ exports.handler = function(event, context, callback){
 
     nvlib.nvInit(event, context, function(account) {
 
-        nvlib.queryDynamoDocs("ballots", "owner", account.user,
+        nvlib.queryDynamoItems("ballots", "owner", account.user,
             function(e){
                 nvlib.handleError(e, callback)
             },

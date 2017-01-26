@@ -26,7 +26,7 @@ exports.handler = function(event, context, callback){
     var ballotId = event.pathParameters.ballotId;
 
     nvlib.chainInit(event, context, function(account) {
-        nvlib.getDynamoItem("ballot","id", account.account_id+":"+ballotId, function(err){
+        nvlib.getDynamoItem("ballots","id", account.account_id+":"+ballotId, function(err){
             nvlib.handleError(err, callback)
         }, function(data){
             if(data == undefined || data.Item == undefined) {

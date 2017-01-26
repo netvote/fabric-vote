@@ -13,18 +13,28 @@ exports.handler = function(event, context, callback){
 
     var ballotId = event.pathParameters.ballotId;
 
-    nvlib.chainInit(event, context, function(chaincodeUser){
-        getResults(chaincodeUser.enrollment_id, ballotId, function(results){
-            var resultObj = JSON.parse(results.result.message);
-            if(resultObj.Id != ""){
-                nvlib.handleSuccess(resultObj, callback);
-            }else{
-                nvlib.handleNotFound(callback);
-            }
-        }, function(e){
-            nvlib.handleError(e, callback);
-        });
+    nvlib.chainInit(event, context, function(account){
 
+        nvlib.getDynamoItem("ballots","id", account.account_id+":"+ballotId, function(err){
+            nvlib.handleError(err, callback)
+        }, function(data){
+            if(data == undefined || data.Item == undefined) {
+                nvlib.handleNotFound(callback);
+            }else if (data.Item.owner != account.user){
+                nvlib.handleUnauthorized(callback);
+            }else{
+                getResults(account.enrollment_id, ballotId, function(results){
+                    var resultObj = JSON.parse(results.result.message);
+                    if(resultObj.Id != ""){
+                        nvlib.handleSuccess(resultObj, callback);
+                    }else{
+                        nvlib.handleNotFound(callback);
+                    }
+                }, function(e){
+                    nvlib.handleError(e, callback);
+                });
+            }
+        });
     }, function(e) {
         nvlib.handleError(e, callback)
     });

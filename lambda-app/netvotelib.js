@@ -41,6 +41,10 @@ module.exports = {
         getDyanmoDoc(table, key, value, errorCallback, callback);
     },
 
+    queryDynamoItems: function(table, key, value, errorCallback, callback){
+        queryDynamoDocs(table, key, value, errorCallback, callback);
+    },
+
     saveDynamoItem: function(table, obj, errorCallback, callback){
         insertDynamoDoc(table, obj, errorCallback, callback);
     },
@@ -52,7 +56,9 @@ module.exports = {
     handleSuccess: function(obj, callback){
         var respObj = {
             "statusCode": 200,
-            "headers": {},
+            "headers": {
+                "Access-Control-Allow-Origin":"*"
+            },
             "body": JSON.stringify(obj)
         };
         callback(null, respObj);
@@ -61,7 +67,9 @@ module.exports = {
     handleUnauthorized: function(callback){
         var respObj = {
             "statusCode": 401,
-            "headers": {},
+            "headers": {
+                "Access-Control-Allow-Origin":"*"
+            },
             "body": JSON.stringify({"status":"unauthorized"})
         };
         callback(null, respObj);
@@ -70,7 +78,9 @@ module.exports = {
     handleNotFound : function(callback){
         var respObj = {
             "statusCode": 404,
-            "headers": {},
+            "headers": {
+                "Access-Control-Allow-Origin":"*"
+            },
             "body": JSON.stringify({"error": "not found"})
         };
         callback(null, respObj);
@@ -79,7 +89,9 @@ module.exports = {
     handleError : function(e, callback){
         var respObj = {
             "statusCode": 500,
-            "headers": {},
+            "headers": {
+                "Access-Control-Allow-Origin":"*"
+            },
             "body": JSON.stringify({"error":e})
         };
         callback(null, respObj);
@@ -89,12 +101,6 @@ module.exports = {
 var initNetvote = function(event, callback, errorCallback) {
         var apiKey = event.requestContext.identity.apiKey;
 
-        if(event.requestContext.authorizer != undefined) {
-            account["user"] = event.requestContext.authorizer.claims.sub;
-        }else{
-            account["user"] = "UNKNOWN";
-        }
-
         getDyanmoDoc("config", "id", "chaincode", errorCallback, function (data) {
             CHAINCODE_ID = data.Item.version;
             CHAIN_HOSTNAME = data.Item.hostname;
@@ -103,6 +109,12 @@ var initNetvote = function(event, callback, errorCallback) {
                 if (data.Item == undefined) {
                     errorCallback("apiKey not found")
                 } else {
+                    var account = data.Item;
+                    if(event.requestContext.authorizer != undefined) {
+                        account["user"] = event.requestContext.authorizer.claims.sub;
+                    }else{
+                        account["user"] = "UNKNOWN";
+                    }
                     callback(data.Item);
                 }
             });

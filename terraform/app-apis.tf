@@ -1,3 +1,8 @@
+//TODO: replace once terraform supports cognito pools
+variable "authorizer_id"{
+  default = "l5g35e"
+}
+
 resource "aws_api_gateway_rest_api" "netvote_mobile_api" {
   name = "Netvote Mobile API"
   description = "This is a mobile-facing API"
@@ -25,7 +30,8 @@ resource "aws_api_gateway_method" "voter_get_ballots" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.vote_ballot.id}"
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -48,7 +54,8 @@ resource "aws_api_gateway_method" "voter_get_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.vote_ballot_id.id}"
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -65,7 +72,8 @@ resource "aws_api_gateway_method" "voter_cast_votes" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.vote_ballot_id.id}"
   http_method = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -94,7 +102,8 @@ resource "aws_api_gateway_method" "admin_get_ballots" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_list.id}"
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -111,7 +120,8 @@ resource "aws_api_gateway_method" "admin_create_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_list.id}"
   http_method = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -134,7 +144,8 @@ resource "aws_api_gateway_method" "admin_update_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id.id}"
   http_method = "PUT"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -151,7 +162,8 @@ resource "aws_api_gateway_method" "admin_get_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id.id}"
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -168,7 +180,8 @@ resource "aws_api_gateway_method" "admin_delete_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id.id}"
   http_method = "DELETE"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -191,7 +204,8 @@ resource "aws_api_gateway_method" "admin_ballot_get_results" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id_results.id}"
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
@@ -207,7 +221,7 @@ resource "aws_api_gateway_integration" "admin_ballot_get_results" {
 #/security
 resource "aws_api_gateway_resource" "app_security" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
-  parent_id = "${aws_api_gateway_rest_api.netvote_api.root_resource_id}"
+  parent_id = "${aws_api_gateway_rest_api.netvote_mobile_api.root_resource_id}"
   path_part = "security"
 }
 
@@ -227,14 +241,15 @@ resource "aws_api_gateway_method" "app_smscode" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.app_smscode.id}"
   http_method = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
 
 resource "aws_api_gateway_integration" "app_smscode" {
-  rest_api_id = "${aws_api_gateway_rest_api.netvote_api.id}"
-  resource_id = "${aws_api_gateway_resource.smscode.id}"
-  http_method = "${aws_api_gateway_method.smscode.http_method}"
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
+  resource_id = "${aws_api_gateway_resource.app_smscode.id}"
+  http_method = "${aws_api_gateway_method.app_smscode.http_method}"
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.send_sms_code.arn}/invocations"

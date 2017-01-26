@@ -4,9 +4,9 @@ console.log('Loading function');
 var nvlib = require("netvotelib");
 
 
-var deleteBallot = function(enrollmentId, ballotId, callback, errorCallback){
-    nvlib.invokeChaincode("delete_ballot", { Id: ballotId }, enrollmentId, function(){
-        nvlib.removeDynamoItem("ballots", "id", ballotId, errorCallback, callback);
+var deleteBallot = function(account, ballotId, callback, errorCallback){
+    nvlib.invokeChaincode("delete_ballot", { Id: ballotId }, account.enrollment_id, function(){
+        nvlib.removeDynamoItem("ballots", "id", account.account_id+":"+ballotId, errorCallback, callback);
     }, errorCallback);
 };
 
@@ -16,13 +16,22 @@ exports.handler = function(event, context, callback){
 
     var ballotId = event.pathParameters.ballotId;
 
-    nvlib.chainInit(event, context, function(chaincodeUser) {
+    nvlib.chainInit(event, context, function(account) {
 
-        deleteBallot(chaincodeUser.enrollment_id, ballotId, function () {
-            nvlib.handleSuccess({"result": "success"}, callback);
-        }, function(err){
+        nvlib.getDynamoItem("ballots","id", account.account_id+":"+ballotId, function(err){
             nvlib.handleError(err, callback)
+        }, function(data){
+            if(data == undefined || data.Item == undefined) {
+                nvlib.handleNotFound(callback);
+            }else if (data.Item.owner != account.user){
+                nvlib.handleUnauthorized(callback);
+            }else{
+                deleteBallot(account, ballotId, function () {
+                    nvlib.handleSuccess({"result": ballotId+" deleted"}, callback);
+                }, function(err){
+                    nvlib.handleError(err, callback)
+                });
+            }
         });
-
     });
 };
