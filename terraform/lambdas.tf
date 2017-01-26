@@ -122,6 +122,14 @@ resource "aws_lambda_permission" "send_sms_code" {
   source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_api.id}/*/${aws_api_gateway_method.smscode.http_method}${aws_api_gateway_resource.smscode.path}"
 }
 
+resource "aws_lambda_permission" "app_send_sms_code" {
+  function_name = "${aws_lambda_function.send_sms_code.function_name}"
+  statement_id = "AllowExecutionFromApiGateway"
+  action = "lambda:InvokeFunction"
+  principal = "apigateway.amazonaws.com"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.smscode.http_method}${aws_api_gateway_resource.app_smscode.path}"
+}
+
 resource "aws_lambda_function" "get_ballot_results" {
   filename = "lambdas.zip"
   function_name = "get-ballot-results"
