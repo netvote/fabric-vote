@@ -2,6 +2,7 @@ var doc = require('dynamodb-doc');
 var dynamo = new doc.DynamoDB();
 var http = require('http');
 var crypto = require('crypto');
+var twilio = require('twilio');
 
 var CHAINCODE_ID = "";
 var CHAIN_HOSTNAME = "";
@@ -19,8 +20,7 @@ module.exports = {
                 enroll(account.enrollment_id, account.enrollment_secret, function () {
                     callback(account);
                 }, errorCallback);
-        }
-        , errorCallback);
+        }, errorCallback);
     },
 
     hash256: function(str){
@@ -51,6 +51,30 @@ module.exports = {
 
     removeDynamoItem: function(table, key, value, errorCallback, callback){
         deleteDynamoItem(table, key, value, errorCallback, callback);
+    },
+
+    sendSms: function(phoneNumbers, message, callback, errorCallback){
+        this.getDynamoItem("config","id","twilio",function(err){
+            errorCallback(err)
+        }, function(data) {
+            var sid = data.Item.sid;
+            var token = data.Item.token;
+            var client = twilio(sid, token);
+            var fromPhone = data.Item.phone;
+
+            for(var i=0; i<phoneNumbers.length; i++) {
+                client.messages.create({
+                    body: message,
+                    to: phoneNumbers[i],
+                    from: fromPhone
+                }, function (err) {
+                    if (err) {
+                        errorCallback(err)
+                    }
+                });
+            }
+            callback({"message": "sms sent"});
+        });
     },
 
     handleSuccess: function(obj, callback){
