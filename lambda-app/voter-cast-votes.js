@@ -41,16 +41,19 @@ exports.handler = function(event, context, callback){
 
     var ballotId = event.pathParameters.ballotId;
     var twoFactorCode = event.headers["nv-two-factor-code"];
-    var voterBallot = JSON.parse(event.body);
-
-    voterBallot["VoterId"] = voterId;
-    voterBallot["BallotId"] = ballotId;
+    var decisions = JSON.parse(event.body);
 
     nvlib.chainInit(event, context, function(account) {
 
         var enrollmentId = account.enrollment_id;
         var accountId = account.account_id;
         var voterId = account.user;
+
+        var voterBallot = {
+            "VoterId": voterId,
+            "BallotId": ballotId,
+            "Decisions": decisions
+        };
 
         verifyTwoFactor(voterBallot, voterId, accountId, twoFactorCode,
             function (err) {
