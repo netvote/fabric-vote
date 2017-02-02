@@ -1,6 +1,6 @@
 //TODO: replace once terraform supports cognito pools
 variable "authorizer_id"{
-  default = "l5g35e"
+  default = "a372kl"
 }
 
 resource "aws_api_gateway_rest_api" "netvote_mobile_api" {
@@ -35,6 +35,14 @@ resource "aws_api_gateway_method" "voter_get_ballots" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "voter_get_ballots_200" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
+  resource_id = "${aws_api_gateway_resource.vote_ballot.id}"
+  http_method = "${aws_api_gateway_method.voter_get_ballots.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 resource "aws_api_gateway_integration" "voter_get_ballots" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.vote_ballot.id}"
@@ -59,6 +67,15 @@ resource "aws_api_gateway_method" "voter_get_ballot" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "voter_get_ballot_200" {
+  rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
+  resource_id = "${aws_api_gateway_resource.vote_ballot_id.id}"
+  http_method = "${aws_api_gateway_method.voter_get_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
+
 resource "aws_api_gateway_integration" "voter_get_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.vote_ballot_id.id}"
@@ -76,6 +93,15 @@ resource "aws_api_gateway_method" "voter_cast_votes" {
   authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
+
+resource "aws_api_gateway_method_response" "voter_cast_votes_200" {
+  rest_api_id = "${aws_api_gateway_method.voter_cast_votes.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.voter_cast_votes.resource_id}"
+  http_method = "${aws_api_gateway_method.voter_cast_votes.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 
 resource "aws_api_gateway_integration" "voter_cast_votes" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
@@ -107,6 +133,15 @@ resource "aws_api_gateway_method" "admin_get_ballots" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "admin_get_ballots_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_get_ballots.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_get_ballots.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_get_ballots.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
+
 resource "aws_api_gateway_integration" "admin_get_ballots" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_list.id}"
@@ -124,6 +159,15 @@ resource "aws_api_gateway_method" "admin_create_ballot" {
   authorizer_id = "${var.authorizer_id}"
   api_key_required = true
 }
+
+resource "aws_api_gateway_method_response" "admin_create_ballot_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_create_ballot.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_create_ballot.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_create_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 
 resource "aws_api_gateway_integration" "admin_create_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
@@ -149,6 +193,14 @@ resource "aws_api_gateway_method" "admin_update_ballot" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "admin_update_ballot_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_update_ballot.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_update_ballot.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_update_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 resource "aws_api_gateway_integration" "admin_update_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id.id}"
@@ -167,6 +219,14 @@ resource "aws_api_gateway_method" "admin_get_ballot" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "admin_get_ballot_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_get_ballot.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_get_ballot.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_get_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 resource "aws_api_gateway_integration" "admin_get_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id.id}"
@@ -183,6 +243,14 @@ resource "aws_api_gateway_method" "admin_delete_ballot" {
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = "${var.authorizer_id}"
   api_key_required = true
+}
+
+resource "aws_api_gateway_method_response" "admin_delete_ballot_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_delete_ballot.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_delete_ballot.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_delete_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "admin_delete_ballot" {
@@ -209,6 +277,14 @@ resource "aws_api_gateway_method" "admin_share_ballot" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_response" "admin_share_ballot_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_share_ballot.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_share_ballot.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_share_ballot.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
+}
+
 resource "aws_api_gateway_integration" "admin_share_ballot" {
   rest_api_id = "${aws_api_gateway_rest_api.netvote_mobile_api.id}"
   resource_id = "${aws_api_gateway_resource.admin_ballot_id_share.id}"
@@ -231,6 +307,14 @@ resource "aws_api_gateway_method" "admin_ballot_get_results" {
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = "${var.authorizer_id}"
   api_key_required = true
+}
+
+resource "aws_api_gateway_method_response" "admin_ballot_get_results_200" {
+  rest_api_id = "${aws_api_gateway_method.admin_ballot_get_results.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.admin_ballot_get_results.resource_id}"
+  http_method = "${aws_api_gateway_method.admin_ballot_get_results.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "admin_ballot_get_results" {
@@ -268,6 +352,14 @@ resource "aws_api_gateway_method" "app_smscode" {
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = "${var.authorizer_id}"
   api_key_required = true
+}
+
+resource "aws_api_gateway_method_response" "app_smscode_200" {
+  rest_api_id = "${aws_api_gateway_method.app_smscode.rest_api_id}"
+  resource_id = "${aws_api_gateway_method.app_smscode.resource_id}"
+  http_method = "${aws_api_gateway_method.app_smscode.http_method}"
+  response_parameters = { "method.response.header.Access-Control-Allow-Origin" = true }
+  status_code = "200"
 }
 
 resource "aws_api_gateway_integration" "app_smscode" {

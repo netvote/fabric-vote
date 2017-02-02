@@ -6,6 +6,7 @@ var uuidV4 = require('uuid/v4');
 
 
 var createBallot = function(account, ballot, callback, errorCallback){
+
     nvlib.invokeChaincode("add_ballot", ballot, account.enrollment_id, function(){
         var obj = {
             "id": account.account_id+":"+ballot.Ballot.Id,

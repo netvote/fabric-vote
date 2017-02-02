@@ -17,7 +17,15 @@ exports.handler = function(event, context, callback){
 
             getBallots(account.user, account.enrollment_id, function(ballots){
                 //result.message is returned as string.  Parsing so handleSuccess can stringify without quotes
-                nvlib.handleSuccess(JSON.parse(ballots.result.message), callback);
+                var ballotObj = JSON.parse(ballots.result.message);
+                var result = [];
+                for(var i =0; i< ballotObj.length; i++){
+
+                    if(ballotObj[i].Id){
+                        result.push(ballotObj[i]);
+                    }
+                }
+                nvlib.handleSuccess(result, callback);
             }, function(e){
                 nvlib.handleError(e, callback);
             });
