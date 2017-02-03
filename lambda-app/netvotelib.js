@@ -26,7 +26,9 @@ module.exports = {
     hash256: function(str){
         const keyhash = crypto.createHash('sha256');
         keyhash.update(str);
-        return keyhash.digest('hex');
+        var result = keyhash.digest('hex');
+        console.log("hashing "+str+" = "+result);
+        return result;
     },
 
     invokeChaincode: function (operation, payload, callback, enrollmentId, errorCallback) {
@@ -169,6 +171,7 @@ var deleteDynamoItem = function(table, key, value, errorCallback, callback){
         Key:{}
     };
     params.Key[key] = value;
+    console.log("dynamo delete payload: "+JSON.stringify(params));
 
     dynamo.deleteItem(params, function(err) {
         if (err) {
@@ -202,6 +205,9 @@ var queryDynamoDocs = function(table, key, value, errorCallback, callback){
         KeyConditions: [ dynamo.Condition(key, "EQ", value) ]
     };
 
+    console.log("dynamo query payload: "+JSON.stringify(params));
+
+
     dynamo.query(params, function(err, data) {
         if (err) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
@@ -219,6 +225,8 @@ var getDyanmoDoc = function(table, key, value, errorCallback, callback){
         Key:{}
     };
     params.Key[key] = value;
+
+    console.log("dynamo get payload: "+JSON.stringify(params));
 
     dynamo.getItem(params, function(err, data) {
         if (err) {

@@ -96,18 +96,6 @@ resource "aws_lambda_function" "create_api_key" {
   description = "SYSTEM: Creates a chaincode account and API Key, stores in DynamoDB"
 }
 
-resource "aws_lambda_function" "send_sms_code" {
-  filename = "lambdas.zip"
-  function_name = "send-sms-code"
-  role = "${aws_iam_role.netvote_api_lambda.arn}"
-  handler = "send-sms-code.handler"
-  runtime = "nodejs4.3"
-  source_code_hash = "${base64sha256(file("lambdas.zip"))}"
-  publish = true
-  timeout = 10
-  description = "VOTER: Sends an SMS code for Two-Factor Authentication"
-}
-
 resource "aws_lambda_function" "kinesis_logger" {
   filename = "lambdas.zip"
   function_name = "vote-kinesis-logger"

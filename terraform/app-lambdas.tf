@@ -199,3 +199,23 @@ resource "aws_lambda_permission" "voter_get_ballots" {
   principal = "apigateway.amazonaws.com"
   source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.voter_get_ballot.http_method}${aws_api_gateway_resource.vote_ballot.path}"
 }
+
+resource "aws_lambda_function" "send_sms_code" {
+  filename = "lambdas-app.zip"
+  function_name = "send-sms-code"
+  role = "${aws_iam_role.netvote_api_lambda.arn}"
+  handler = "send-sms-code.handler"
+  runtime = "nodejs4.3"
+  source_code_hash = "${base64sha256(file("lambdas-app.zip"))}"
+  publish = true
+  timeout = 10
+  description = "VOTER: Sends an SMS code for Two-Factor Authentication"
+}
+
+resource "aws_lambda_permission" "send_sms_code" {
+  function_name = "${aws_lambda_function.send_sms_code.function_name}"
+  statement_id = "AllowExecutionFromApiGateway"
+  action = "lambda:InvokeFunction"
+  principal = "apigateway.amazonaws.com"
+  source_arn = "arn:aws:execute-api:${var.region}:${var.account}:${aws_api_gateway_rest_api.netvote_mobile_api.id}/*/${aws_api_gateway_method.app_smscode.http_method}${aws_api_gateway_resource.app_smscode.path}"
+}
