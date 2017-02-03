@@ -12,14 +12,14 @@ const CREATE_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","B
 const CREATE_DECISION2_JSON = `{"Id":"test-id2","Name":"What is your other decision?","BallotId":"transaction-id","Options":[{"Id":"b","Name":"B","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"}}`
 
 
-const TEST_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}`
+const TEST_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":0,"Repeatable":false}`
 
 const CREATE_DECISION_JSON_BALLOT2 = `{"Id":"test-id2","Name":"What is your decision?","BallotId":"otherballot","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"}}`
 
 
 const CREATE_DECISION_JSON_REQUIRED_2 = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":2}`
 
-const CREATE_REPEATABLE_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":100,"Repeatable":true}`
+const CREATE_REPEATABLE_DECISION_JSON = `{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":100,"Repeatable":true}`
 
 
 func mockEnv(){
@@ -147,24 +147,24 @@ func TestVoteChaincode_Invoke_AddPrivateBallotWithDecisions(t *testing.T) {
 
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
 
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id2","Voter":{"Id":"slanders"}}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 
 	// check double assignment has no effect
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1},"transaction-id2":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 
 	// check casting works
 	mockTime(100)
 
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":100,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampSeconds":100,"Attributes":null}`)
 
 	// check subsequent assignment has no effect
 	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":["us","ga","123"]}}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampNS":100,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0},"transaction-id2":{"test-id":1}},"LastVoteTimestampSeconds":100,"Attributes":null}`)
 
 
 }
@@ -184,7 +184,7 @@ func TestVoteChaincode_Invoke_AddBallotWithDecisions(t *testing.T){
 	checkState(t, stub, "test/DECISION/transaction-id/test-id", TEST_DECISION_JSON)
 	checkState(t, stub, "test/RESULTS/transaction-id/test-id", `{"Id":"test-id","Results":{}}`)
 
-	checkQuery(t, stub, "get_admin_ballot", []string{`{"Id":"transaction-id"}`}, `{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""},"Decisions":[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}]}`)
+	checkQuery(t, stub, "get_admin_ballot", []string{`{"Id":"transaction-id"}`}, `{"Ballot":{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""},"Decisions":[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":0,"Repeatable":false}]}`)
 
 	checkInvokeTX(t, stub,  "transaction-id", "delete_ballot",
 		[]string{`{"Id":"transaction-id"}`})
@@ -210,16 +210,16 @@ func TestVoteChaincode_Invoke_TestMultipleAllocates(t *testing.T) {
 
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
 
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 
 	//cast votes
 	mockTime(100)
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampNS":100,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampSeconds":100,"Attributes":null}`)
 
 	//try to re-allocate votes, votes should remain at 0 for this decision
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampNS":100,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampSeconds":100,"Attributes":null}`)
 	resetTime()
 }
 
@@ -231,7 +231,7 @@ func TestVoteChaincode_Invoke_AddVoter(t *testing.T) {
 
 	checkInvoke(t, stub, "add_voter", []string{`{"Id":"voter-id","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"ballotId":{"d1":2,"d2":1}}}`})
 
-	checkState(t, stub, "test/VOTER/voter-id", `{"Id":"voter-id","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"ballotId":{"d1":2,"d2":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/voter-id", `{"Id":"voter-id","Dimensions":["us","ga","123"],"DecisionIdToVoteCount":{"ballotId":{"d1":2,"d2":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 
 }
 
@@ -258,16 +258,16 @@ func TestVoteChaincode_Invoke_CastVote(t *testing.T) {
 	checkState(t, stub, "test/DECISION/transaction-id/test-id", TEST_DECISION_JSON)
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""}`)
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 	checkState(t, stub, "test/ACCOUNT_BALLOTS/test", `{"Id":"test","PublicBallotIds":{"transaction-id":true},"PrivateBallotIds":{}}`)
 
-	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"transaction-id"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}]`)
+	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"transaction-id"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":0,"Repeatable":false}]`)
 
 	mockTime(500)
 
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId": "transaction-id", "Dimensions":["US","GA"], "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
 
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampNS":500,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":0}},"LastVoteTimestampSeconds":500,"Attributes":null}`)
 	checkState(t, stub, "test/RESULTS/transaction-id/test-id", `{"Id":"test-id","Results":{"ALL":{"a":1},"GA":{"a":1},"US":{"a":1}}}`)
 }
 
@@ -287,18 +287,18 @@ func TestVoteChaincode_Invoke_CastVoteMultiBallot(t *testing.T) {
 	checkState(t, stub, "test/DECISION/transaction-id/test-id", TEST_DECISION_JSON)
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""}`)
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":1},"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":1},"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 	checkState(t, stub, "test/ACCOUNT_BALLOTS/test", `{"Id":"test","PublicBallotIds":{"otherballot":true,"transaction-id":true},"PrivateBallotIds":{}}`)
 
-	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"transaction-id"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}]`)
-	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"otherballot"}`}, `[{"Id":"test-id2","Name":"What is your decision?","BallotId":"otherballot","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelayNS":0,"Repeatable":false}]`)
+	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"transaction-id"}`}, `[{"Id":"test-id","Name":"What is your decision?","BallotId":"transaction-id","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":0,"Repeatable":false}]`)
+	checkQuery(t, stub, "get_ballot", []string{`{"VoterId":"slanders","BallotId":"otherballot"}`}, `[{"Id":"test-id2","Name":"What is your decision?","BallotId":"otherballot","Options":[{"Id":"a","Name":"A","Attributes":{"image":"/url"}}],"Attributes":{"Key":"Value"},"ResponsesRequired":1,"RepeatVoteDelaySeconds":0,"Repeatable":false}]`)
 
 	checkQuery(t, stub, "get_voter_ballots", []string{`{"Id":"slanders"}`}, `[{"Id":"otherballot","Name":"Nov 8, 2016","Decisions":["test-id2"],"Private":false,"Attributes":null,"Description":""},{"Id":"transaction-id","Name":"Nov 8, 2016","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""}]`)
 
 	mockTime(500)
 
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":1},"transaction-id":{"test-id":0}},"LastVoteTimestampNS":500,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":1},"transaction-id":{"test-id":0}},"LastVoteTimestampSeconds":500,"Attributes":null}`)
 	checkState(t, stub, "test/RESULTS/transaction-id/test-id", `{"Id":"test-id","Results":{"ALL":{"a":1}}}`)
 	checkState(t, stub, "test/RESULTS/otherballot/test-id2", `{"Id":"test-id2","Results":{}}`)
 
@@ -306,7 +306,7 @@ func TestVoteChaincode_Invoke_CastVoteMultiBallot(t *testing.T) {
 
 	mockTime(1000)
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"otherballot", "Decisions":[{"DecisionId":"test-id2", "Selections": {"a":1}}]}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":0},"transaction-id":{"test-id":0}},"LastVoteTimestampNS":1000,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"otherballot":{"test-id2":0},"transaction-id":{"test-id":0}},"LastVoteTimestampSeconds":1000,"Attributes":null}`)
 	checkState(t, stub, "test/RESULTS/transaction-id/test-id", `{"Id":"test-id","Results":{"ALL":{"a":1}}}`)
 	checkState(t, stub, "test/RESULTS/otherballot/test-id2", `{"Id":"test-id2","Results":{"ALL":{"a":1}}}`)
 
@@ -329,13 +329,15 @@ func TestVoteChaincode_Invoke_CastRepeatableVote(t *testing.T){
 	checkState(t, stub, "test/DECISION/transaction-id/test-id", CREATE_REPEATABLE_DECISION_JSON)
 	checkState(t, stub, "test/BALLOT/transaction-id", `{"Id":"transaction-id","Name":"","Decisions":["test-id"],"Private":false,"Attributes":null,"Description":""}`)
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders"}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":null}`)
 	checkState(t, stub, "test/ACCOUNT_BALLOTS/test", `{"Id":"test","PublicBallotIds":{"transaction-id":true},"PrivateBallotIds":{}}`)
 	mockTime(500)
 	checkInvoke(t, stub, "cast_votes", []string{`{"VoterId":"slanders", "BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`})
 
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":500,"Attributes":null}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":500,"Attributes":null}`)
 	checkState(t, stub, "test/RESULTS/transaction-id/test-id", `{"Id":"test-id","Results":{"ALL":{"a":1}}}`)
+
+	checkInvoke(t, stub, "assign_ballot", []string{`{"BallotId":"transaction-id","Voter":{"Id":"slanders","Dimensions":[]}}`})
 
 	checkInvokeError(t, stub, "cast_votes", []string{`{"VoterId":"slanders","BallotId":"transaction-id", "Decisions":[{"DecisionId":"test-id", "Selections": {"a":1}}]}`}, "Already voted this period")
 	mockTime(1500)
@@ -420,5 +422,5 @@ func TestVoteChaincode_Invoke_InitVoterWithAttributes(t *testing.T) {
 
 
 	checkInvokeTX(t, stub, "transaction-id", "init_voter", []string{`{"Id":"slanders","Attributes":{"key":"val"}}`})
-	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampNS":0,"Attributes":{"key":"val"}}`)
+	checkState(t, stub, "test/VOTER/slanders", `{"Id":"slanders","Dimensions":[],"DecisionIdToVoteCount":{"transaction-id":{"test-id":1}},"LastVoteTimestampSeconds":0,"Attributes":{"key":"val"}}`)
 }

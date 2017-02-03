@@ -54,7 +54,7 @@ type Decision struct {
 	Options           []Option
 	Attributes map[string]string
 	ResponsesRequired int
-	RepeatVoteDelayNS int64
+	RepeatVoteDelaySeconds int
 	Repeatable        bool
 }
 
@@ -87,7 +87,7 @@ type Voter struct {
 	Id string
 	Dimensions []string
 	DecisionIdToVoteCount map[string]map[string]int
-	LastVoteTimestampNS int64
+	LastVoteTimestampSeconds int
 	Attributes map[string]string
 }
 
@@ -173,7 +173,7 @@ func validate(stateDao StateDAO, vote Vote){
 }
 
 func alreadyVoted(voter Voter, decision Decision)(bool){
-	return (voter.LastVoteTimestampNS > 0 && (voter.LastVoteTimestampNS > (getNow()-decision.RepeatVoteDelayNS)))
+	return (voter.LastVoteTimestampSeconds > 0 && (voter.LastVoteTimestampSeconds > (getNow()-decision.RepeatVoteDelaySeconds)))
 }
 
 func addBallotDecisionsToVoter(stateDao StateDAO, ballot Ballot, voter *Voter, save bool){
@@ -299,7 +299,7 @@ func castVote(stateDao StateDAO, vote Vote){
 	for _, d := range results_array {
 		stateDao.SaveDecisionResults(vote.BallotId, d)
 	}
-	voter.LastVoteTimestampNS = getNow()
+	voter.LastVoteTimestampSeconds = getNow()
 	stateDao.SaveVoter(voter)
 
 	ballot := stateDao.GetBallotDecisions(vote.BallotId)
@@ -313,12 +313,12 @@ func castVote(stateDao StateDAO, vote Vote){
 	stateDao.setVoteEvent(voteEvent)
 }
 
-func getNow() (int64){
+func getNow() (int){
 	if(os.Getenv("TEST_TIME") != ""){
-		i, _ := strconv.ParseInt(os.Getenv("TEST_TIME"), 10, 64)
+		i, _ := strconv.Atoi(os.Getenv("TEST_TIME"))
 		return i
 	}
-	return time.Now().UnixNano()
+	return int(time.Now().Unix())
 }
 
 func hasRole(stub shim.ChaincodeStubInterface, role string) (bool){
