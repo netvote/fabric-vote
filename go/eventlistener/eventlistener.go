@@ -103,7 +103,7 @@ func (a *adapter) GetInterestedEvents() ([]*pb.Interest, error) {
 				RegInfo: &pb.Interest_ChaincodeRegInfo{
 					ChaincodeRegInfo: &pb.ChaincodeReg{
 						ChaincodeID: a.chaincodeID,
-						EventName:   ""}}}}, nil
+						EventName:   ""}}},{EventType: pb.EventType_BLOCK}}, nil
 	}
 	return []*pb.Interest{{EventType: pb.EventType_BLOCK}, {EventType: pb.EventType_REJECTION}}, nil
 }
