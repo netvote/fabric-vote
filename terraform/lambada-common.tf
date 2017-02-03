@@ -24,6 +24,12 @@ resource "aws_iam_policy" "apigateway_full" {
 }
 
 
+resource "aws_iam_policy" "ses_send_email" {
+  name = "api-ses-policy"
+  description = "Allows access to send ses email"
+  policy =  "${file("conf/ses-lambda-policy.json")}"
+}
+
 
 # API Lambda Permissions
 
@@ -45,6 +51,11 @@ resource "aws_iam_role_policy_attachment" "dynamo_attach" {
 resource "aws_iam_role_policy_attachment" "kinesis_attach" {
   role = "${aws_iam_role.netvote_api_lambda.name}"
   policy_arn = "${aws_iam_policy.kinesis_read.arn}"
+}
+
+resource "aws_iam_role_policy_attachment" "ses_attach" {
+  role = "${aws_iam_role.netvote_api_lambda.name}"
+  policy_arn = "${aws_iam_policy.ses_send_email.arn}"
 }
 
 
