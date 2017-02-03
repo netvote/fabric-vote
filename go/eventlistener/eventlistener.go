@@ -69,7 +69,7 @@ type Decision struct {
 	Options           []Option
 	Attributes map[string]string
 	ResponsesRequired int
-	RepeatVoteDelayNS int64
+	RepeatVoteDelaySeconds int
 	Repeatable        bool
 }
 
