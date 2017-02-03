@@ -187,6 +187,15 @@ func main() {
 
 	for {
 		select {
+		case b := <-a.notfy:
+			fmt.Printf("\n")
+			fmt.Printf("\n")
+			fmt.Printf("Received block\n")
+			fmt.Printf("--------------\n")
+			for _, r := range b.Block.Transactions {
+				fmt.Printf("Transaction:\n\t[%v]\n", r)
+			}
+			fmt.Printf("Transaction:\n\t[%v]\n", string(b.Block.StateHash))
 		case ce := <-a.cEvent:
 
 			fmt.Printf("\nEVENT BYTES:\n"+string(ce.ChaincodeEvent.Payload)+"\n")
