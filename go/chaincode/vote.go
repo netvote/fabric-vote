@@ -87,6 +87,7 @@ type Voter struct {
 	Id string
 	Dimensions []string
 	DecisionIdToVoteCount map[string]map[string]int
+	DecisionTimestamps map[string]map[string][]int;
 	LastVoteTimestampSeconds int
 	Attributes map[string]string
 }
@@ -173,7 +174,8 @@ func validate(stateDao StateDAO, vote Vote){
 }
 
 func alreadyVoted(voter Voter, decision Decision)(bool){
-	return (voter.LastVoteTimestampSeconds > 0 && (voter.LastVoteTimestampSeconds > (getNow()-decision.RepeatVoteDelaySeconds)))
+	decisionHistory :=  voter.DecisionTimestamps[decision.BallotId][decision.Id];
+	return (len(decisionHistory) > 0 && (decisionHistory[len(decisionHistory)-1] > (getNow()-decision.RepeatVoteDelaySeconds)))
 }
 
 func addBallotDecisionsToVoter(stateDao StateDAO, ballot Ballot, voter *Voter, save bool){
@@ -192,6 +194,15 @@ func addDecisionToVoter(ballotId string, voter *Voter, decision Decision){
 	}
 	if(voter.DecisionIdToVoteCount[ballotId] == nil){
 		voter.DecisionIdToVoteCount[ballotId] = make(map[string]int)
+	}
+	if(voter.DecisionTimestamps == nil){
+		voter.DecisionTimestamps = make(map[string]map[string][]int)
+	}
+	if(voter.DecisionTimestamps[ballotId] == nil){
+		voter.DecisionTimestamps[ballotId] = make(map[string][]int)
+	}
+	if(voter.DecisionTimestamps[ballotId][decision.Id] == nil){
+		voter.DecisionTimestamps[ballotId][decision.Id] = make([]int, 0)
 	}
 	if _, exists := voter.DecisionIdToVoteCount[ballotId][decision.Id]; exists {
 		//already allocated for this, skip
@@ -269,6 +280,8 @@ func castVote(stateDao StateDAO, vote Vote){
 	dimensions := getDimensionsForVote(voter, vote)
 	attributes := getAttributesForVote(voter, vote)
 
+	now := getNow()
+
 	for _, voter_decision := range vote.Decisions {
 
 		decisionResults := stateDao.GetDecisionResults(vote.BallotId, voter_decision.DecisionId)
@@ -294,12 +307,12 @@ func castVote(stateDao StateDAO, vote Vote){
 			}
 		}
 		results_array = append(results_array, decisionResults)
-
+		voter.DecisionTimestamps[vote.BallotId][voter_decision.DecisionId] = append(voter.DecisionTimestamps[vote.BallotId][voter_decision.DecisionId], now)
 	}
 	for _, d := range results_array {
 		stateDao.SaveDecisionResults(vote.BallotId, d)
 	}
-	voter.LastVoteTimestampSeconds = getNow()
+	voter.LastVoteTimestampSeconds = now;
 	stateDao.SaveVoter(voter)
 
 	ballot := stateDao.GetBallotDecisions(vote.BallotId)
@@ -438,7 +451,7 @@ func handleInvoke(stub shim.ChaincodeStubInterface, function string, args []stri
 			allocateVotesToVoter(stateDao, voter)
 		}
 	} else if function == FUNC_ASSIGN_BALLOT {
-		if(hasRole(stub, ROLE_ADMIN)){
+		if (hasRole(stub, ROLE_ADMIN)) {
 			var ballotAssignment BallotAssignment
 			parseArg(args[0], &ballotAssignment)
 			voter := lazyInitVoter(stateDao, ballotAssignment.Voter)
