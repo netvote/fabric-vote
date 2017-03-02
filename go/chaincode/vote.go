@@ -65,7 +65,22 @@ type Ballot struct{
 	Private bool
 	Attributes map[string]string
 	Description string
+	StartTimeSeconds int
+	EndTimeSeconds int
+	Active bool
 }
+
+func (t *Ballot) ActiveElection()(bool){
+	return t.Active || t.ActiveDates()
+}
+
+func (t *Ballot) ActiveDates()(bool){
+	now := getNow()
+	begins_in_past := (t.StartTimeSeconds <= now)
+	ends_in_future := (t.EndTimeSeconds >= now)
+	return begins_in_past && ends_in_future
+}
+
 
 type BallotDecisions struct{
 	Ballot Ballot
@@ -142,6 +157,12 @@ func validate(stateDao StateDAO, vote Vote){
 	if(vote.BallotId == ""){
 		//TODO: for now, this is required
 		panic("BallotId is required")
+	}
+
+	ballot := stateDao.GetBallot(vote.BallotId)
+
+	if(!ballot.ActiveElection()){
+		panic("This ballot is not active")
 	}
 
 	for _, decision := range vote.Decisions {
